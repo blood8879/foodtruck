@@ -6,6 +6,7 @@ import { useAppData } from "../../data/AppData";
 import { AppButton, Badge, Card, Icon, MoneyText } from "../../ui/components";
 import { colors, fontSize, fontWeight, spacing, tabularNums } from "../../theme/tokens";
 import { foldOrders, formatWon } from "../../core";
+import { PAYMENT_METHOD_LABELS } from "../../core/types";
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -98,6 +99,12 @@ export default function OrderDetailScreen() {
             <View style={styles.subRow}>
               <Text style={styles.subLabel}>순이익</Text>
               <Text style={[styles.subVal, { color: colors.green }]}>{formatWon(order.net)}</Text>
+            </View>
+            <View style={styles.subRow}>
+              <Text style={styles.subLabel}>결제수단</Text>
+              <Text style={styles.subVal}>
+                {PAYMENT_METHOD_LABELS[order.paymentMethod ?? "other"]}
+              </Text>
             </View>
           </Card>
 

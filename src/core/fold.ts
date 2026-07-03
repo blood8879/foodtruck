@@ -4,6 +4,7 @@ import type {
   Millis,
   OrderPlacedEvent,
   OrderView,
+  PaymentMethod,
   SalesSummary,
   SessionView,
 } from "./types";
@@ -47,6 +48,7 @@ export function foldOrders(events: DomainEvent[]): OrderView[] {
       gross,
       cost,
       net: gross - cost,
+      paymentMethod: e.paymentMethod,
       voided: voided.has(e.eventId),
       lateSynced: false,
     });
@@ -87,6 +89,28 @@ export function summarize(orders: OrderView[]): SalesSummary {
     .sort((a, b) => b.revenue - a.revenue || b.qty - a.qty);
 
   return { gross, cost, net, orderCount, menuRanking };
+}
+
+/**
+ * Aggregate gross + order count per payment method. Voided orders are excluded.
+ * Orders without a paymentMethod (pre-payment-method history) fall into "other".
+ */
+export function summarizeByPayment(
+  orders: OrderView[],
+): Record<PaymentMethod, { gross: number; orderCount: number }> {
+  const out: Record<PaymentMethod, { gross: number; orderCount: number }> = {
+    card: { gross: 0, orderCount: 0 },
+    cash: { gross: 0, orderCount: 0 },
+    transfer: { gross: 0, orderCount: 0 },
+    other: { gross: 0, orderCount: 0 },
+  };
+  for (const o of orders) {
+    if (o.voided) continue;
+    const method = o.paymentMethod ?? "other";
+    out[method].gross += o.gross;
+    out[method].orderCount += 1;
+  }
+  return out;
 }
 
 /** Local calendar date key "YYYY-MM-DD" with optional tz offset (minutes east of UTC). */

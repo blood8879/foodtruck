@@ -3,11 +3,16 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
 import { AppButton, Card, Icon, MoneyText } from "../ui/components";
-import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
-import { formatWon, shouldShowSessionAd } from "../core";
+import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../theme/tokens";
+import { formatWon, shouldShowSessionAd, summarizeByPayment } from "../core";
+import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "../core/types";
+
+const PAY_ORDER: PaymentMethod[] = ["card", "cash", "transfer", "other"];
 
 export default function CloseSummaryScreen() {
-  const { truck, summaryToday, ownerId, closeSession } = useAppData();
+  const { truck, summaryToday, ordersToday, ownerId, closeSession } = useAppData();
+  const byPayment = summarizeByPayment(ordersToday);
+  const payRows = PAY_ORDER.filter((m) => byPayment[m].gross > 0);
 
   function endBusiness() {
     closeSession(ownerId);
@@ -49,6 +54,18 @@ export default function CloseSummaryScreen() {
             <Text style={styles.count}>{summaryToday.orderCount}건</Text>
           </View>
         </Card>
+
+        {payRows.length > 0 ? (
+          <Card style={styles.summaryCard}>
+            <Text style={styles.cardTitle}>시재 요약</Text>
+            {payRows.map((m) => (
+              <View key={m} style={styles.row}>
+                <Text style={styles.label}>{PAYMENT_METHOD_LABELS[m]}</Text>
+                <Text style={styles.payAmount}>{formatWon(byPayment[m].gross)}</Text>
+              </View>
+            ))}
+          </Card>
+        ) : null}
       </View>
 
       <View style={styles.footer}>
@@ -71,9 +88,11 @@ const styles = StyleSheet.create({
   icon: { width: 72, height: 72, borderRadius: 22, backgroundColor: colors.greenSoft, alignItems: "center", justifyContent: "center" },
   heroTitle: { fontSize: 20, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.5 },
   summaryCard: { gap: spacing.md },
+  cardTitle: { fontSize: fontSize.bodySm, fontWeight: fontWeight.heavy, color: colors.muted },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   label: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.ink2 },
   count: { fontSize: fontSize.bigNumberSm, fontWeight: fontWeight.heavy, color: colors.ink },
+  payAmount: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.ink, ...tabularNums },
   footer: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm },
   caption: { textAlign: "center", fontSize: fontSize.caption, color: colors.muted },
 });

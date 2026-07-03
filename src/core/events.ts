@@ -5,6 +5,7 @@ import type {
   OrderLineSnapshot,
   OrderPlacedEvent,
   OrderVoidedEvent,
+  PaymentMethod,
   SessionClosedEvent,
   SessionOpenedEvent,
 } from "./types";
@@ -30,6 +31,7 @@ export interface PlaceOrderInput {
   lines: OrderLineSnapshot[];
   discountMemo?: string;
   manualTotal?: number | null;
+  paymentMethod?: PaymentMethod;
   now?: number;
 }
 
@@ -44,6 +46,7 @@ export function makeOrderPlaced(input: PlaceOrderInput): OrderPlacedEvent {
     lines: input.lines,
     discountMemo: input.discountMemo,
     manualTotal: input.manualTotal ?? null,
+    paymentMethod: input.paymentMethod,
   };
 }
 

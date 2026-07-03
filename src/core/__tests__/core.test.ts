@@ -19,6 +19,7 @@ import {
   recipeCost,
   shouldShowSessionAd,
   summarize,
+  summarizeByPayment,
   uuidv7,
 } from "../index";
 import type { DomainEvent, Menu } from "../types";
@@ -133,6 +134,49 @@ describe("fold orders", () => {
     burger.sellPrice = 9999;
     expect(views[0].gross).toBe(14000); // unchanged
     burger.sellPrice = 7000; // restore
+  });
+});
+
+describe("payment method", () => {
+  const oOpen = makeSessionOpened("owner", 1_000);
+  const cardOrder = makeOrderPlaced({
+    sessionId: oOpen.sessionId,
+    enteredBy: "owner",
+    lines: [lineFromMenu(burger, 1)],
+    paymentMethod: "card",
+    now: 2_000,
+  });
+  const cashOrder = makeOrderPlaced({
+    sessionId: oOpen.sessionId,
+    enteredBy: "owner",
+    lines: [lineFromMenu(burger, 2)],
+    paymentMethod: "cash",
+    now: 3_000,
+  });
+  // Legacy order: no paymentMethod set (backward-compat with pre-feature events).
+  const legacyOrder = makeOrderPlaced({
+    sessionId: oOpen.sessionId,
+    enteredBy: "owner",
+    lines: [lineFromMenu(burger, 1)],
+    now: 4_000,
+  });
+
+  it("passes paymentMethod through fold and leaves legacy orders undefined", () => {
+    const views = foldOrders([oOpen, cardOrder, legacyOrder]);
+    const card = views.find((v) => v.orderId === cardOrder.eventId)!;
+    const legacy = views.find((v) => v.orderId === legacyOrder.eventId)!;
+    expect(card.paymentMethod).toBe("card");
+    expect(legacy.paymentMethod).toBeUndefined();
+  });
+
+  it("aggregates by payment method, excludes voided, attributes undefined to other", () => {
+    const voidEv = makeOrderVoided(cashOrder.eventId, "owner", 5_000);
+    const views = foldOrders([oOpen, cardOrder, cashOrder, legacyOrder, voidEv]);
+    const byPay = summarizeByPayment(views);
+    expect(byPay.card).toEqual({ gross: 7000, orderCount: 1 });
+    expect(byPay.cash).toEqual({ gross: 0, orderCount: 0 }); // voided out
+    expect(byPay.transfer).toEqual({ gross: 0, orderCount: 0 });
+    expect(byPay.other).toEqual({ gross: 7000, orderCount: 1 }); // legacy → other
   });
 });
 

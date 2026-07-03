@@ -107,6 +107,89 @@ describe("sync engine", () => {
     expect(owner.local.allEvents().some((e) => e.eventId === staffOrder.eventId)).toBe(true);
   });
 
+});
+
+describe("gap-free append — M-GATE / migration 004 per-truck serialization", () => {
+  const owner = { truckId: TRUCK, userId: "owner", role: "owner" as const };
+  const order = (now: number) =>
+    makeOrderPlaced({ sessionId: null, enteredBy: "owner", lines: [lineFromMenu(burger, 1)], now });
+
+  it("(a) hazard: a naive seq>cursor pull LOSES an event under out-of-order commit", async () => {
+    // This is the failure the M-GATE warned about, and why the invariant matters.
+    const server = new FakeSyncServer();
+    const low = order(2000);
+    const high = order(3000);
+
+    // PRE-004 behaviour: `low` drew seq=1 but has not committed; `high` commits at
+    // seq=2 first. This is exactly what a bare identity default permits.
+    const commitLow = server.pushDeferred({ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 2000, event: low });
+    await server.push([{ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 3000, event: high }]);
+
+    // A naive puller (the runtime SupabaseSyncPort strategy) advances its cursor
+    // to the max visible seq, jumping over the still-hidden seq=1 hole.
+    const p1 = await server.pullNaive({ ...owner, sinceSeq: 0 });
+    expect(p1.events.map((e) => e.seq)).toEqual([2]);
+    expect(p1.nextCursor).toBe(2);
+
+    commitLow(); // seq=1 finally visible — but the cursor is already past it
+    const p2 = await server.pullNaive({ ...owner, sinceSeq: p1.nextCursor });
+    expect(p2.events).toHaveLength(0); // low is lost forever
+  });
+
+  it("(a) invariant: per-truck serialized append (seq drawn at commit) keeps the naive pull gap-free", async () => {
+    const server = new FakeSyncServer();
+    const first = order(2000); // conceptually the transaction that STARTED first
+    const second = order(3000);
+
+    // Under 004 the seq is drawn only at commit under the truck lock. Both
+    // transactions are in flight; whoever COMMITS first gets the lower seq — so
+    // no reserve-low / commit-high window (the hazard above) can ever exist.
+    const commitFirst = server.serializedAppend({ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 2000, event: first });
+    const commitSecond = server.serializedAppend({ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 3000, event: second });
+
+    // `second` commits before `first`: commit order == seq order regardless.
+    expect(commitSecond()).toBe(1);
+    expect(commitFirst()).toBe(2);
+
+    const p1 = await server.pullNaive({ ...owner, sinceSeq: 0 });
+    expect(p1.events.map((e) => e.seq)).toEqual([1, 2]); // both delivered, in order
+    expect(p1.nextCursor).toBe(2);
+    const p2 = await server.pullNaive({ ...owner, sinceSeq: p1.nextCursor });
+    expect(p2.events).toHaveLength(0); // nothing left behind
+  });
+
+  it("(b) duplicate push is idempotent: a re-pushed event_id draws no new seq", async () => {
+    const server = new FakeSyncServer();
+    const e = order(2000);
+    const r1 = await server.push([{ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 2000, event: e }]);
+    const r2 = await server.push([{ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 2000, event: e }]); // duplicate
+    expect(r1.acceptedIds).toEqual([e.eventId]);
+    expect(r2.acceptedIds).toEqual([e.eventId]); // still accepted (idempotent)
+
+    const p = await server.pullNaive({ ...owner, sinceSeq: 0 });
+    expect(p.events).toHaveLength(1); // exactly one server copy / one seq
+    expect(p.events[0].seq).toBe(1);
+  });
+
+  it("(c) cursor advance is monotone across repeated naive pulls (never moves backward)", async () => {
+    const server = new FakeSyncServer();
+    await server.push([{ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 2000, event: order(2000) }]);
+    await server.push([{ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 3000, event: order(3000) }]);
+    await server.push([{ truckId: TRUCK, enteredBy: "owner", deviceCreatedAt: 4000, event: order(4000) }]);
+
+    let cursor = 0;
+    const seen: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      const p = await server.pullNaive({ ...owner, sinceSeq: cursor, limit: 2 });
+      expect(p.nextCursor).toBeGreaterThanOrEqual(cursor); // never regresses
+      cursor = p.nextCursor;
+      seen.push(cursor);
+    }
+    expect(seen).toEqual([2, 3, 3, 3]); // advances to the max, then holds
+  });
+});
+
+describe("sync engine (H2)", () => {
   it("late-synced event lands in its original day bucket (H2)", async () => {
     const server = new FakeSyncServer();
     const a = device(server, "owner", "owner");

@@ -5,13 +5,18 @@
  * server/supabase/schema.sql). RLS enforces H3 role scoping server-side, so the
  * client pull does not (and must not) re-implement access control.
  *
- * NOTE (build-vs-buy gate, ralplan M-GATE): a bare `seq > cursor` pull can in
- * principle skip an event whose identity `seq` was assigned before commit but
- * became visible after a higher seq (commit-order non-monotonicity). The
- * SyncEngine contract is validated gap-free against FakeSyncServer; for the live
- * Supabase path the M2 spike must confirm gap-freeness (logical replication slot
- * or a commit-order/overlap-window column) before this adapter is trusted in
- * production. Until then treat Supabase sync as eventually-consistent read.
+ * Gap-free pull (ralplan M-GATE — RESOLVED by
+ * server/supabase/004_serialize_event_append.sql). A bare `seq > cursor` pull is
+ * gap-free ONLY IF, per truck, commit order == seq order; otherwise an event
+ * whose `seq` was drawn before commit could become visible after the cursor has
+ * already advanced past it, and be lost forever. Migration 004 establishes that
+ * invariant: a BEFORE INSERT trigger takes pg_advisory_xact_lock(hashtext(
+ * truck_id)) and only then draws seq from a dedicated sequence, holding the lock
+ * to commit — so a lower seq for a truck can never surface after a higher one.
+ * This adapter therefore depends on that SERVER invariant (not a client
+ * watermark): the pull below is a plain `seq > sinceSeq order by seq asc` and the
+ * cursor advances to the last seq returned. If migration 004 is ever reverted,
+ * this pull is no longer gap-free.
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {

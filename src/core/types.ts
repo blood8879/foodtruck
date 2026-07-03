@@ -9,6 +9,15 @@ export type Id = string;
 export type Millis = number;
 export type Role = "owner" | "staff";
 export type PlanTier = "free" | "paid";
+export type PaymentMethod = "card" | "cash" | "transfer" | "other";
+
+/** Korean labels for payment methods (카드/현금/계좌이체/기타). */
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  card: "카드",
+  cash: "현금",
+  transfer: "계좌이체",
+  other: "기타",
+};
 
 export interface RecipeItem {
   id: Id;
@@ -89,6 +98,8 @@ export interface OrderPlacedEvent {
   discountMemo?: string;
   /** Manual total override (won). When set, overrides the computed line sum. */
   manualTotal?: number | null;
+  /** Payment method. Optional for backward-compat with events stored before M?. */
+  paymentMethod?: PaymentMethod;
 }
 
 export interface OrderVoidedEvent {
@@ -120,6 +131,8 @@ export interface OrderView {
   cost: number;
   net: number;
   voided: boolean;
+  /** Payment method from the order event; undefined for pre-payment-method orders. */
+  paymentMethod?: PaymentMethod;
   /** Marked when this order arrived via a late sync (M2+); false for local M1. */
   lateSynced: boolean;
 }

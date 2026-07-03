@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../../data/AppData";
 import { Badge, Card, Icon, LockChip, MoneyText } from "../../ui/components";
+import { TrendChart } from "../../components/trend-chart";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../../theme/tokens";
 import {
   canUse,
@@ -25,14 +26,14 @@ export default function SalesScreen() {
   const canPeriod = canUse(truck?.planTier ?? "free", "periodAnalysis");
 
   const TZ_KST = 540;
-  const { summary, orders, label } = useMemo(() => {
+  const { summary, orders, allOrders, label } = useMemo(() => {
     const all = foldOrders(events);
     const now = Date.now();
     const prefix =
       period === "month" ? monthKey(now, TZ_KST) : period === "year" ? yearKey(now, TZ_KST) : dateKey(now, TZ_KST);
     const scoped = filterByPeriodPrefix(all, prefix, TZ_KST).sort((a, b) => b.ts - a.ts);
     const lbl = period === "month" ? "이번 달" : period === "year" ? "올해" : "오늘";
-    return { summary: summarize(scoped), orders: scoped, label: lbl };
+    return { summary: summarize(scoped), orders: scoped, allOrders: all, label: lbl };
   }, [events, period]);
 
   const staffName = useMemo(() => {
@@ -70,7 +71,7 @@ export default function SalesScreen() {
             {!paid ? <LockChip label="유료" /> : null}
           </View>
           {canUse(truck?.planTier ?? "free", "trendGraph") ? (
-            <Text style={styles.muted}>추이 그래프 (유료 활성)</Text>
+            <TrendChart orders={allOrders} tzOffsetMinutes={TZ_KST} />
           ) : (
             <View style={styles.lockArea}>
               <View style={styles.lockIcon}>

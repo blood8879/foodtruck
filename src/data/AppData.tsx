@@ -33,6 +33,7 @@ import type {
   Menu,
   OrderLineSnapshot,
   OrderView,
+  PaymentMethod,
   PlanTier,
   SalesSummary,
   SessionView,
@@ -44,6 +45,7 @@ export interface PlaceOrderArgs {
   lines: OrderLineSnapshot[];
   discountMemo?: string;
   manualTotal?: number | null;
+  paymentMethod?: PaymentMethod;
   enteredBy: string;
 }
 
@@ -212,7 +214,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     closeSession: (by) => {
       if (activeSession) append(makeSessionClosed(activeSession.sessionId, by));
     },
-    placeOrder: ({ lines, discountMemo, manualTotal, enteredBy }) =>
+    placeOrder: ({ lines, discountMemo, manualTotal, paymentMethod, enteredBy }) =>
       append(
         makeOrderPlaced({
           sessionId: activeSession?.sessionId ?? null,
@@ -220,6 +222,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           lines,
           discountMemo,
           manualTotal,
+          paymentMethod,
         }),
       ),
     voidOrder: (orderId, by) => append(makeOrderVoided(orderId, by)),

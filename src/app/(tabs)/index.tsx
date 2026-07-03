@@ -13,7 +13,15 @@ import { useAppData } from "../../data/AppData";
 import { AppButton, Badge, Icon, QtyStepper } from "../../ui/components";
 import { colors, fontSize, fontWeight, radii, shadow, spacing, tabularNums } from "../../theme/tokens";
 import { formatWon, lineFromMenu } from "../../core";
-import type { Menu } from "../../core/types";
+import type { Menu, PaymentMethod } from "../../core/types";
+
+// Short segment labels (full labels live in core PAYMENT_METHOD_LABELS).
+const PAY_OPTIONS: { method: PaymentMethod; label: string }[] = [
+  { method: "card", label: "카드" },
+  { method: "cash", label: "현금" },
+  { method: "transfer", label: "이체" },
+  { method: "other", label: "기타" },
+];
 
 function elapsedLabel(openedAt: number, now: number): string {
   const s = Math.max(0, Math.floor((now - openedAt) / 1000));
@@ -28,6 +36,7 @@ export default function PosScreen() {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [discountMemo, setDiscountMemo] = useState("");
   const [manualTotalText, setManualTotalText] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -78,11 +87,13 @@ export default function PosScreen() {
       lines: cartLines.map((l) => lineFromMenu(l.menu, l.qty)),
       discountMemo: discountMemo.trim() || undefined,
       manualTotal: manualTotal,
+      paymentMethod,
       enteredBy: ownerId,
     });
     setCart({});
     setDiscountMemo("");
     setManualTotalText("");
+    setPaymentMethod("card"); // reset to default for the next order
     setTimeout(() => {
       submittingRef.current = false;
     }, 600);
@@ -207,6 +218,22 @@ export default function PosScreen() {
             </View>
           ) : null}
         </ScrollView>
+        <View style={styles.paySegment}>
+          {PAY_OPTIONS.map((o) => {
+            const active = paymentMethod === o.method;
+            return (
+              <Pressable
+                key={o.method}
+                onPress={() => setPaymentMethod(o.method)}
+                style={[styles.paySeg, active && styles.paySegActive]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+              >
+                <Text style={[styles.paySegText, active && styles.paySegTextActive]}>{o.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
         <AppButton
           title={`주문 완료 · ${formatWon(total)}`}
           variant="accent"
@@ -313,4 +340,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   adjustInput: { flex: 1, fontSize: fontSize.bodySm, color: colors.ink, padding: 0 },
+  paySegment: { flexDirection: "row", gap: 8, marginBottom: spacing.sm },
+  paySeg: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: radii.chip,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+  },
+  paySegActive: { backgroundColor: colors.inkPanel, borderColor: colors.inkPanel },
+  paySegText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.ink2 },
+  paySegTextActive: { color: colors.white },
 });
