@@ -6,17 +6,21 @@ import {
   dateKey,
   effectiveCost,
   filterByDateKey,
+  foldExpenses,
   foldOrders,
   foldSessions,
   formatWon,
   getActiveSession,
   inviteCode,
   lineFromMenu,
+  makeExpenseAdded,
+  makeExpenseVoided,
   makeOrderPlaced,
   makeOrderVoided,
   makeSessionClosed,
   makeSessionOpened,
   margin,
+  sumExpenses,
   recipeCost,
   shouldShowSessionAd,
   summarize,
@@ -197,6 +201,75 @@ describe("sessions", () => {
     const b = makeSessionOpened("staff", 2_000);
     // earliest-opened wins as the canonical active session
     expect(getActiveSession([b, a])?.sessionId).toBe(a.sessionId);
+  });
+});
+
+describe("expenses", () => {
+  const e1 = makeExpenseAdded({
+    sessionId: "s1",
+    category: "spot",
+    amount: 30000,
+    memo: "여의도 자릿세",
+    enteredBy: "owner",
+    now: 1_000,
+  });
+  const e2 = makeExpenseAdded({
+    sessionId: "s1",
+    category: "fuel",
+    amount: 15000,
+    enteredBy: "owner",
+    now: 2_000,
+  });
+
+  it("folds expenses into read models sorted by ts", () => {
+    const views = foldExpenses([e1, e2]);
+    expect(views).toHaveLength(2);
+    expect(views[0].expenseId).toBe(e1.eventId);
+    expect(views[0].category).toBe("spot");
+    expect(views[0].amount).toBe(30000);
+    expect(views[0].memo).toBe("여의도 자릿세");
+    expect(views[0].voided).toBe(false);
+    expect(views[1].memo).toBeUndefined(); // no memo passed → omitted
+  });
+
+  it("marks voided expenses and is idempotent on duplicate void", () => {
+    const voidEv = makeExpenseVoided(e1.eventId, "owner", 3_000);
+    const dupVoid = makeExpenseVoided(e1.eventId, "owner", 3_500); // idempotent
+    const views = foldExpenses([e1, e2, voidEv, dupVoid]);
+    const v1 = views.find((v) => v.expenseId === e1.eventId)!;
+    const v2 = views.find((v) => v.expenseId === e2.eventId)!;
+    expect(v1.voided).toBe(true);
+    expect(v2.voided).toBe(false);
+    // duplicate ExpenseAdded (same eventId) collapses too
+    expect(foldExpenses([e1, e1, e2])).toHaveLength(2);
+  });
+
+  it("sums non-voided expenses only", () => {
+    expect(sumExpenses(foldExpenses([e1, e2]))).toBe(45000);
+    const voidEv = makeExpenseVoided(e1.eventId, "owner", 3_000);
+    expect(sumExpenses(foldExpenses([e1, e2, voidEv]))).toBe(15000); // e1 excluded
+  });
+});
+
+describe("session location tag", () => {
+  it("stamps locationTag onto the session view when provided", () => {
+    const open = makeSessionOpened("owner", 1_000, "여의도 벚꽃축제");
+    expect(open.locationTag).toBe("여의도 벚꽃축제");
+    const [view] = foldSessions([open]);
+    expect(view.locationTag).toBe("여의도 벚꽃축제");
+  });
+
+  it("trims whitespace and omits an empty/absent tag (backward compat)", () => {
+    const trimmed = makeSessionOpened("owner", 1_000, "  강남역  ");
+    expect(trimmed.locationTag).toBe("강남역");
+
+    const blank = makeSessionOpened("owner", 2_000, "   ");
+    expect(blank.locationTag).toBeUndefined();
+
+    const legacy = makeSessionOpened("owner", 3_000);
+    expect(legacy.locationTag).toBeUndefined();
+    const [view] = foldSessions([legacy]);
+    expect(view.locationTag).toBeUndefined();
   });
 });
 

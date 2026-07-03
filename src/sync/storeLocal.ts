@@ -13,6 +13,10 @@ function authorMeta(e: DomainEvent): { enteredBy: Id; deviceCreatedAt: number } 
       return { enteredBy: e.openedBy, deviceCreatedAt: e.ts };
     case "SessionClosed":
       return { enteredBy: e.closedBy, deviceCreatedAt: e.ts };
+    case "ExpenseAdded":
+      return { enteredBy: e.enteredBy, deviceCreatedAt: e.ts };
+    case "ExpenseVoided":
+      return { enteredBy: e.voidedBy, deviceCreatedAt: e.ts };
   }
 }
 

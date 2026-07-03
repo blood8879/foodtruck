@@ -5,15 +5,16 @@ import { useAppData } from "../data/AppData";
 import { capAllowsAd } from "../ads/adGate";
 import { AppButton, Card, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../theme/tokens";
-import { formatWon, shouldShowSessionAd, summarizeByPayment } from "../core";
+import { formatWon, shouldShowSessionAd, sumExpenses, summarizeByPayment } from "../core";
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "../core/types";
 
 const PAY_ORDER: PaymentMethod[] = ["card", "cash", "transfer", "other"];
 
 export default function CloseSummaryScreen() {
-  const { truck, summaryToday, ordersToday, ownerId, closeSession } = useAppData();
+  const { truck, summaryToday, ordersToday, expensesToday, ownerId, closeSession } = useAppData();
   const byPayment = summarizeByPayment(ordersToday);
   const payRows = PAY_ORDER.filter((m) => byPayment[m].gross > 0);
+  const expenseTotal = sumExpenses(expensesToday);
 
   async function endBusiness() {
     closeSession(ownerId);
@@ -55,6 +56,22 @@ export default function CloseSummaryScreen() {
             <Text style={styles.label}>주문 수</Text>
             <Text style={styles.count}>{summaryToday.orderCount}건</Text>
           </View>
+          {expenseTotal > 0 ? (
+            <>
+              <View style={styles.row}>
+                <Text style={styles.label}>오늘 지출</Text>
+                <Text style={styles.expenseAmount}>-{formatWon(expenseTotal)}</Text>
+              </View>
+              <View style={styles.row}>
+                <Text style={styles.label}>지출 차감 순이익</Text>
+                <MoneyText
+                  value={formatWon(summaryToday.net - expenseTotal)}
+                  size={fontSize.bigNumberSm}
+                  color={colors.green}
+                />
+              </View>
+            </>
+          ) : null}
         </Card>
 
         {payRows.length > 0 ? (
@@ -95,6 +112,7 @@ const styles = StyleSheet.create({
   label: { fontSize: fontSize.body, fontWeight: fontWeight.semibold, color: colors.ink2 },
   count: { fontSize: fontSize.bigNumberSm, fontWeight: fontWeight.heavy, color: colors.ink },
   payAmount: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.ink, ...tabularNums },
+  expenseAmount: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.danger, ...tabularNums },
   footer: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm },
   caption: { textAlign: "center", fontSize: fontSize.caption, color: colors.muted },
 });

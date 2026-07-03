@@ -1,5 +1,8 @@
 import { uuidv7 } from "./ids";
 import type {
+  ExpenseAddedEvent,
+  ExpenseCategory,
+  ExpenseVoidedEvent,
   Id,
   Menu,
   OrderLineSnapshot,
@@ -61,13 +64,58 @@ export function makeOrderVoided(targetOrderId: Id, voidedBy: Id, now?: number): 
   };
 }
 
-export function makeSessionOpened(openedBy: Id, now?: number): SessionOpenedEvent {
+export function makeSessionOpened(
+  openedBy: Id,
+  now?: number,
+  locationTag?: string,
+): SessionOpenedEvent {
   const ts = now ?? Date.now();
   const sessionId = uuidv7(ts);
-  return { type: "SessionOpened", eventId: sessionId, ts, sessionId, openedBy };
+  const tag = locationTag?.trim();
+  return {
+    type: "SessionOpened",
+    eventId: sessionId,
+    ts,
+    sessionId,
+    openedBy,
+    ...(tag ? { locationTag: tag } : {}),
+  };
 }
 
 export function makeSessionClosed(sessionId: Id, closedBy: Id, now?: number): SessionClosedEvent {
   const ts = now ?? Date.now();
   return { type: "SessionClosed", eventId: uuidv7(ts), ts, sessionId, closedBy };
+}
+
+export interface AddExpenseInput {
+  sessionId: Id | null;
+  category: ExpenseCategory;
+  amount: number; // integer KRW, > 0
+  memo?: string;
+  enteredBy: Id;
+  now?: number;
+}
+
+export function makeExpenseAdded(input: AddExpenseInput): ExpenseAddedEvent {
+  const ts = input.now ?? Date.now();
+  const memo = input.memo?.trim();
+  return {
+    type: "ExpenseAdded",
+    eventId: uuidv7(ts),
+    ts,
+    sessionId: input.sessionId,
+    category: input.category,
+    amount: input.amount,
+    ...(memo ? { memo } : {}),
+    enteredBy: input.enteredBy,
+  };
+}
+
+export function makeExpenseVoided(
+  targetExpenseId: Id,
+  voidedBy: Id,
+  now?: number,
+): ExpenseVoidedEvent {
+  const ts = now ?? Date.now();
+  return { type: "ExpenseVoided", eventId: uuidv7(ts), ts, targetExpenseId, voidedBy };
 }

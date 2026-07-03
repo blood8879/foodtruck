@@ -1,6 +1,6 @@
 import { router } from "expo-router";
 import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../../data/AppData";
 import { Badge, Card, Icon, LockChip, MoneyText } from "../../ui/components";
@@ -10,31 +10,52 @@ import {
   canUse,
   dateKey,
   filterByPeriodPrefix,
+  filterExpensesByPeriodPrefix,
+  foldExpenses,
   foldOrders,
   formatWon,
   monthKey,
   summarize,
+  sumExpenses,
   yearKey,
 } from "../../core";
+import { EXPENSE_CATEGORY_LABELS } from "../../core/types";
 
 type Period = "day" | "month" | "year";
 
 export default function SalesScreen() {
-  const { truck, events, staff } = useAppData();
+  const { truck, events, staff, ownerId, voidExpense } = useAppData();
   const [period, setPeriod] = useState<Period>("day");
   const paid = truck?.planTier === "paid";
   const canPeriod = canUse(truck?.planTier ?? "free", "periodAnalysis");
 
   const TZ_KST = 540;
-  const { summary, orders, allOrders, label } = useMemo(() => {
+  const { summary, orders, allOrders, expenses, expenseTotal, label } = useMemo(() => {
     const all = foldOrders(events);
     const now = Date.now();
     const prefix =
       period === "month" ? monthKey(now, TZ_KST) : period === "year" ? yearKey(now, TZ_KST) : dateKey(now, TZ_KST);
     const scoped = filterByPeriodPrefix(all, prefix, TZ_KST).sort((a, b) => b.ts - a.ts);
+    const scopedExpenses = filterExpensesByPeriodPrefix(foldExpenses(events), prefix, TZ_KST).sort(
+      (a, b) => b.ts - a.ts,
+    );
     const lbl = period === "month" ? "이번 달" : period === "year" ? "올해" : "오늘";
-    return { summary: summarize(scoped), orders: scoped, allOrders: all, label: lbl };
+    return {
+      summary: summarize(scoped),
+      orders: scoped,
+      allOrders: all,
+      expenses: scopedExpenses,
+      expenseTotal: sumExpenses(scopedExpenses),
+      label: lbl,
+    };
   }, [events, period]);
+
+  function confirmVoidExpense(expenseId: string, categoryLabel: string, amount: number) {
+    Alert.alert("지출 삭제", `${categoryLabel} ${formatWon(amount)}을(를) 삭제할까요?`, [
+      { text: "취소", style: "cancel" },
+      { text: "삭제", style: "destructive", onPress: () => voidExpense(expenseId, ownerId) },
+    ]);
+  }
 
   const staffName = useMemo(() => {
     const map = new Map(staff.map((s) => [s.id, s]));
@@ -57,6 +78,17 @@ export default function SalesScreen() {
             <MoneyText value={formatWon(summary.net)} color={colors.green} />
           </Card>
         </View>
+
+        {expenseTotal > 0 ? (
+          <Card style={styles.netAfterCard}>
+            <Text style={styles.kpiLabel}>지출 차감 순이익</Text>
+            <MoneyText
+              value={formatWon(summary.net - expenseTotal)}
+              size={fontSize.bigNumberSm}
+              color={colors.green}
+            />
+          </Card>
+        ) : null}
 
         <View style={styles.toggleRow}>
           <PeriodTab label="일" active={period === "day"} locked={false} onPress={() => setPeriod("day")} />
@@ -111,7 +143,50 @@ export default function SalesScreen() {
           )}
         </Card>
 
-        {/* 4. order history */}
+        {/* 4. expenses (period-scoped) */}
+        <Card style={styles.section}>
+          <View style={styles.sectionHead}>
+            <Text style={styles.sectionTitle}>지출</Text>
+            {expenseTotal > 0 ? (
+              <Text style={styles.expenseTotal}>-{formatWon(expenseTotal)}</Text>
+            ) : null}
+          </View>
+          {expenses.length === 0 ? (
+            <Text style={styles.muted}>{label} 지출이 없어요</Text>
+          ) : (
+            expenses.map((e) => (
+              <Pressable
+                key={e.expenseId}
+                style={styles.expenseRow}
+                disabled={e.voided}
+                onPress={() =>
+                  confirmVoidExpense(e.expenseId, EXPENSE_CATEGORY_LABELS[e.category], e.amount)
+                }
+              >
+                <View style={styles.expenseLeft}>
+                  <Badge tone={e.voided ? "danger" : "neutral"}>
+                    {EXPENSE_CATEGORY_LABELS[e.category]}
+                  </Badge>
+                  {e.memo ? (
+                    <Text style={[styles.expenseMemo, e.voided && styles.strike]} numberOfLines={1}>
+                      {e.memo}
+                    </Text>
+                  ) : null}
+                  {e.voided ? <Badge tone="danger">취소</Badge> : null}
+                </View>
+                <Text style={[styles.expenseAmount, e.voided && styles.strike]}>
+                  -{formatWon(e.amount)}
+                </Text>
+              </Pressable>
+            ))
+          )}
+          <Pressable style={styles.addExpenseBtn} onPress={() => router.push("/expense-add")}>
+            <Icon name="add" size={18} color={colors.accent} />
+            <Text style={styles.addExpenseText}>지출 추가</Text>
+          </Pressable>
+        </Card>
+
+        {/* 5. order history */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>주문 내역</Text>
           {orders.length === 0 ? (
@@ -189,8 +264,31 @@ const styles = StyleSheet.create({
   periodTabActive: { backgroundColor: colors.accent, borderColor: colors.accent },
   periodText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.ink2 },
   periodTextActive: { color: colors.white },
+  netAfterCard: { gap: 8 },
   section: { gap: spacing.md },
   sectionHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  expenseTotal: { fontSize: fontSize.body, fontWeight: fontWeight.heavy, color: colors.danger, ...tabularNums },
+  expenseRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.line2,
+  },
+  expenseLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
+  expenseMemo: { flex: 1, fontSize: fontSize.bodySm, color: colors.ink2 },
+  expenseAmount: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.danger, ...tabularNums },
+  addExpenseBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: radii.input,
+    backgroundColor: colors.accentSoft,
+  },
+  addExpenseText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.accent },
   sectionTitle: { fontSize: fontSize.body, fontWeight: fontWeight.heavy, color: colors.ink },
   muted: { fontSize: fontSize.bodySm, color: colors.muted },
   lockArea: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl, backgroundColor: colors.surfaceAlt, borderRadius: radii.cardSm },

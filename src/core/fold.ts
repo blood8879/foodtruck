@@ -1,5 +1,6 @@
 import type {
   DomainEvent,
+  ExpenseView,
   Id,
   Millis,
   OrderPlacedEvent,
@@ -113,6 +114,57 @@ export function summarizeByPayment(
   return out;
 }
 
+/**
+ * Fold the event log into per-expense read models.
+ * Idempotent: duplicate ExpenseVoided / ExpenseAdded (same eventId) collapse —
+ * the same pattern used by foldOrders for OrderVoided.
+ */
+export function foldExpenses(events: DomainEvent[]): ExpenseView[] {
+  const voided = new Set<Id>();
+  for (const e of events) {
+    if (e.type === "ExpenseVoided") voided.add(e.targetExpenseId);
+  }
+
+  const seen = new Set<Id>();
+  const out: ExpenseView[] = [];
+  for (const e of events) {
+    if (e.type !== "ExpenseAdded") continue;
+    if (seen.has(e.eventId)) continue; // idempotent
+    seen.add(e.eventId);
+    out.push({
+      expenseId: e.eventId,
+      ts: e.ts,
+      sessionId: e.sessionId,
+      category: e.category,
+      amount: e.amount,
+      memo: e.memo,
+      enteredBy: e.enteredBy,
+      voided: voided.has(e.eventId),
+    });
+  }
+  out.sort((a, b) => a.ts - b.ts);
+  return out;
+}
+
+/** Sum of non-voided expense amounts. */
+export function sumExpenses(expenses: ExpenseView[]): number {
+  let total = 0;
+  for (const e of expenses) {
+    if (e.voided) continue;
+    total += e.amount;
+  }
+  return total;
+}
+
+/** Filter expenses whose date/month/year key starts with `prefix`. */
+export function filterExpensesByPeriodPrefix(
+  expenses: ExpenseView[],
+  prefix: string,
+  tzOffsetMinutes?: number,
+): ExpenseView[] {
+  return expenses.filter((e) => dateKey(e.ts, tzOffsetMinutes).startsWith(prefix));
+}
+
 /** Local calendar date key "YYYY-MM-DD" with optional tz offset (minutes east of UTC). */
 export function dateKey(ts: Millis, tzOffsetMinutes?: number): string {
   const off = tzOffsetMinutes ?? -new Date(ts).getTimezoneOffset();
@@ -165,6 +217,7 @@ export function foldSessions(events: DomainEvent[]): SessionView[] {
           openedAt: e.ts,
           closedAt: null,
           openedBy: e.openedBy,
+          ...(e.locationTag ? { locationTag: e.locationTag } : {}),
         });
       }
     } else if (e.type === "SessionClosed") {

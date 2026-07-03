@@ -52,6 +52,7 @@ export default function RootLayout() {
             <Stack.Screen name="session-start" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="menu-edit" options={{ presentation: "modal" }} />
+            <Stack.Screen name="expense-add" options={{ presentation: "modal" }} />
             <Stack.Screen name="truck-edit" options={{ presentation: "modal" }} />
             <Stack.Screen name="order/[id]" options={{ presentation: "modal" }} />
             <Stack.Screen name="close-summary" options={{ presentation: "modal" }} />

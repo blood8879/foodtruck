@@ -20,10 +20,13 @@ import { getSupabase } from "../sync/supabaseClient";
 import {
   dateKey,
   filterByDateKey,
+  foldExpenses,
   foldOrders,
   getActiveSession,
   inviteCode,
   lineFromMenu,
+  makeExpenseAdded,
+  makeExpenseVoided,
   makeOrderPlaced,
   makeOrderVoided,
   makeSessionClosed,
@@ -32,6 +35,8 @@ import {
 } from "../core";
 import type {
   DomainEvent,
+  ExpenseCategory,
+  ExpenseView,
   Menu,
   OrderLineSnapshot,
   OrderView,
@@ -51,6 +56,13 @@ export interface PlaceOrderArgs {
   enteredBy: string;
 }
 
+export interface AddExpenseArgs {
+  category: ExpenseCategory;
+  amount: number;
+  memo?: string;
+  enteredBy: string;
+}
+
 interface AppDataValue {
   loading: boolean;
   truck: Truck | null;
@@ -62,6 +74,7 @@ interface AppDataValue {
   activeSession: SessionView | null;
   ordersToday: OrderView[];
   summaryToday: SalesSummary;
+  expensesToday: ExpenseView[];
   pendingSync: number;
   syncEnabled: boolean;
   // mutations
@@ -69,10 +82,12 @@ interface AppDataValue {
   deleteMenu: (id: string) => void;
   loadSampleMenus: () => void;
   toggleSoldOut: (id: string, soldOut: boolean) => void;
-  openSession: (by: string) => void;
+  openSession: (by: string, locationTag?: string) => void;
   closeSession: (by: string) => void;
   placeOrder: (args: PlaceOrderArgs) => void;
   voidOrder: (orderId: string, by: string) => void;
+  addExpense: (args: AddExpenseArgs) => void;
+  voidExpense: (expenseId: string, by: string) => void;
   setPlanTier: (tier: PlanTier) => void;
   /** Rotate the invite code (invalidates the previous one). Local-first. */
   regenerateInviteCode: () => void;
@@ -177,6 +192,12 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     return filterByDateKey(all, dateKey(Date.now(), TZ_KST), TZ_KST).sort((a, b) => b.ts - a.ts);
   }, [events]);
   const summaryToday = useMemo(() => summarize(ordersToday), [ordersToday]);
+  const expensesToday = useMemo(() => {
+    const all = foldExpenses(events);
+    return all
+      .filter((e) => dateKey(e.ts, TZ_KST) === dateKey(Date.now(), TZ_KST))
+      .sort((a, b) => b.ts - a.ts);
+  }, [events]);
   const categories = useMemo(() => {
     const set = new Set<string>();
     for (const m of menus) set.add(m.category);
@@ -193,6 +214,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     activeSession,
     ordersToday,
     summaryToday,
+    expensesToday,
     pendingSync,
     syncEnabled,
     ownerId,
@@ -212,10 +234,10 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       seedDemoMenus(repo);
       refresh();
     },
-    openSession: (by) => {
+    openSession: (by, locationTag) => {
       // Single-active-session invariant (write-side guard): ignore double-open.
       if (activeSession) return;
-      append(makeSessionOpened(by));
+      append(makeSessionOpened(by, undefined, locationTag));
     },
     closeSession: (by) => {
       if (activeSession) append(makeSessionClosed(activeSession.sessionId, by));
@@ -232,6 +254,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
         }),
       ),
     voidOrder: (orderId, by) => append(makeOrderVoided(orderId, by)),
+    addExpense: ({ category, amount, memo, enteredBy }) =>
+      append(
+        makeExpenseAdded({
+          sessionId: activeSession?.sessionId ?? null,
+          category,
+          amount,
+          memo,
+          enteredBy,
+        }),
+      ),
+    voidExpense: (expenseId, by) => append(makeExpenseVoided(expenseId, by)),
     setPlanTier: (tier) => {
       repo.setPlanTier(tier);
       refresh();

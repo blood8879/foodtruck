@@ -1,16 +1,17 @@
 import { router } from "expo-router";
-import { useMemo } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useMemo, useState } from "react";
+import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { capAllowsAd } from "../ads/adGate";
-import { AppButton, Card, Icon, MoneyText } from "../ui/components";
+import { AppButton, Card, Chip, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
 import {
   dateKey,
   filterByDateKey,
   foldOrders,
+  foldSessions,
   formatWon,
   shouldShowSessionAd,
   summarize,
@@ -21,10 +22,27 @@ const TZ_KST = 540;
 export default function SessionStartScreen() {
   const { truck, events, ownerId, openSession } = useAppData();
   const { configured, userId } = useAuth();
+  const [locationTag, setLocationTag] = useState("");
 
   const yesterday = useMemo(() => {
     const key = dateKey(Date.now() - 86_400_000, TZ_KST);
     return summarize(filterByDateKey(foldOrders(events), key, TZ_KST));
+  }, [events]);
+
+  // Unique location tags from past sessions, most-recent first (up to 5).
+  const recentTags = useMemo(() => {
+    const sessions = foldSessions(events);
+    const seen = new Set<string>();
+    const tags: string[] = [];
+    for (let i = sessions.length - 1; i >= 0; i--) {
+      const t = sessions[i].locationTag?.trim();
+      if (t && !seen.has(t)) {
+        seen.add(t);
+        tags.push(t);
+        if (tags.length >= 5) break;
+      }
+    }
+    return tags;
   }, [events]);
 
   const today = new Date().toLocaleDateString("ko-KR", {
@@ -34,7 +52,7 @@ export default function SessionStartScreen() {
   });
 
   async function startBusiness() {
-    openSession(ownerId);
+    openSession(ownerId, locationTag.trim() || undefined);
     const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());
     if (showAd) {
       router.replace({ pathname: "/ad", params: { phase: "open" } });
@@ -76,6 +94,25 @@ export default function SessionStartScreen() {
             />
           </Card>
         </View>
+
+        <Card style={styles.locationCard}>
+          <Text style={styles.locationLabel}>오늘 장사 장소 (선택)</Text>
+          <TextInput
+            value={locationTag}
+            onChangeText={setLocationTag}
+            placeholder="예: 여의도 벚꽃축제"
+            placeholderTextColor={colors.muted2}
+            style={styles.locationInput}
+            returnKeyType="done"
+          />
+          {recentTags.length > 0 ? (
+            <View style={styles.tagRow}>
+              {recentTags.map((t) => (
+                <Chip key={t} label={t} active={locationTag.trim() === t} onPress={() => setLocationTag(t)} />
+              ))}
+            </View>
+          ) : null}
+        </Card>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -130,6 +167,19 @@ const styles = StyleSheet.create({
   yesterdayRow: { flexDirection: "row", gap: spacing.md },
   yCard: { flex: 1, gap: 6 },
   yLabel: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.muted },
+  locationCard: { gap: spacing.md },
+  locationLabel: { fontSize: fontSize.label, fontWeight: fontWeight.bold, color: colors.muted },
+  locationInput: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.line,
+    borderRadius: radii.input,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: fontSize.body,
+    color: colors.ink,
+  },
+  tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   footer: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm },
   caption: { textAlign: "center", fontSize: fontSize.caption, color: colors.muted },
 });

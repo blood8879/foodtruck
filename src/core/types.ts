@@ -19,6 +19,18 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   other: "기타",
 };
 
+/** Expense categories for spot-fee / event-fee / fuel / supplies / etc. */
+export type ExpenseCategory = "spot" | "event_fee" | "fuel" | "supplies" | "other";
+
+/** Korean labels for expense categories (자릿세/행사비/유류비/소모품/기타). */
+export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
+  spot: "자릿세",
+  event_fee: "행사비",
+  fuel: "유류비",
+  supplies: "소모품",
+  other: "기타",
+};
+
 export interface RecipeItem {
   id: Id;
   name: string;
@@ -78,6 +90,8 @@ export interface SessionOpenedEvent {
   ts: Millis;
   sessionId: Id;
   openedBy: Id; // staff id
+  /** Optional business location / event tag (장소·행사). Absent on pre-feature events. */
+  locationTag?: string;
 }
 
 export interface SessionClosedEvent {
@@ -110,11 +124,32 @@ export interface OrderVoidedEvent {
   voidedBy: Id;
 }
 
+export interface ExpenseAddedEvent {
+  type: "ExpenseAdded";
+  eventId: Id; // also the expense id
+  ts: Millis;
+  sessionId: Id | null;
+  category: ExpenseCategory;
+  amount: number; // integer KRW, > 0
+  memo?: string;
+  enteredBy: Id;
+}
+
+export interface ExpenseVoidedEvent {
+  type: "ExpenseVoided";
+  eventId: Id;
+  ts: Millis;
+  targetExpenseId: Id;
+  voidedBy: Id;
+}
+
 export type DomainEvent =
   | SessionOpenedEvent
   | SessionClosedEvent
   | OrderPlacedEvent
-  | OrderVoidedEvent;
+  | OrderVoidedEvent
+  | ExpenseAddedEvent
+  | ExpenseVoidedEvent;
 
 export type DomainEventType = DomainEvent["type"];
 
@@ -157,4 +192,17 @@ export interface SessionView {
   openedAt: Millis;
   closedAt: Millis | null;
   openedBy: Id;
+  /** Location / event tag stamped at open time, if any. */
+  locationTag?: string;
+}
+
+export interface ExpenseView {
+  expenseId: Id;
+  ts: Millis;
+  sessionId: Id | null;
+  category: ExpenseCategory;
+  amount: number;
+  memo?: string;
+  enteredBy: Id;
+  voided: boolean;
 }
