@@ -1,14 +1,16 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { capAllowsAd } from "../ads/adGate";
 import { scheduleCloseReminder } from "../notifications/closeReminder";
+import { fetchCurrentWeather } from "../weather/weatherPort";
 import { AppButton, Card, Chip, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
 import {
+  activePlans,
   dateKey,
   filterByDateKey,
   foldOrders,
@@ -16,14 +18,56 @@ import {
   formatWon,
   shouldShowSessionAd,
   summarize,
+  WEATHER_CONDITION_LABELS,
+  type WeatherStamp,
 } from "../core";
+
+/** Emoji shown next to the weather stamp on the start screen. */
+const WEATHER_EMOJI: Record<WeatherStamp["condition"], string> = {
+  clear: "☀️",
+  clouds: "☁️",
+  rain: "🌧️",
+  snow: "❄️",
+};
 
 const TZ_KST = 540;
 
 export default function SessionStartScreen() {
-  const { truck, events, ownerId, openSession } = useAppData();
+  const { truck, events, ownerId, openSession, plans } = useAppData();
   const { configured, userId } = useAuth();
   const [locationTag, setLocationTag] = useState("");
+
+  // If today has a scheduled plan with a location, prefill the tag once —
+  // the user can still edit or clear it before opening the session.
+  const prefilledRef = useRef(false);
+  useEffect(() => {
+    if (prefilledRef.current) return;
+    const todayKey = dateKey(Date.now(), TZ_KST);
+    const todayPlan = activePlans(plans).find((p) => p.date === todayKey && p.locationTag);
+    if (todayPlan?.locationTag) {
+      prefilledRef.current = true;
+      setLocationTag((cur) => cur || todayPlan.locationTag!);
+    }
+  }, [plans]);
+  // Weather is fetched in the background on mount; kept in a ref so
+  // startBusiness() reads the freshest value without re-render coupling, and
+  // mirrored to state so the badge can render when it arrives.
+  const weatherRef = useRef<WeatherStamp | null>(null);
+  const [weather, setWeather] = useState<WeatherStamp | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    // Fire-and-forget: fetchCurrentWeather never throws and resolves to null on
+    // any failure, so no catch is needed to keep the screen usable.
+    void fetchCurrentWeather().then((w) => {
+      if (!alive || !w) return;
+      weatherRef.current = w;
+      setWeather(w);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const yesterday = useMemo(() => {
     const key = dateKey(Date.now() - 86_400_000, TZ_KST);
@@ -53,7 +97,11 @@ export default function SessionStartScreen() {
   });
 
   async function startBusiness() {
-    openSession(ownerId, { locationTag: locationTag.trim() || undefined });
+    // Stamp the weather only if it has already arrived — never wait on it.
+    openSession(ownerId, {
+      locationTag: locationTag.trim() || undefined,
+      weather: weatherRef.current ?? undefined,
+    });
     // Fire-and-forget: don't delay the screen transition on notification setup.
     void scheduleCloseReminder();
     const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());
@@ -67,7 +115,15 @@ export default function SessionStartScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.topRow}>
-        <Text style={styles.date}>{today}</Text>
+        <View style={styles.dateRow}>
+          <Text style={styles.date}>{today}</Text>
+          {weather ? (
+            <Text style={styles.weather}>
+              {WEATHER_EMOJI[weather.condition]} {weather.tempC}°C{" "}
+              {WEATHER_CONDITION_LABELS[weather.condition]}
+            </Text>
+          ) : null}
+        </View>
         <View style={styles.preBadge}>
           <View style={styles.preDot} />
           <Text style={styles.preBadgeText}>영업 전</Text>
@@ -143,7 +199,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
   },
+  dateRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
   date: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.ink2 },
+  weather: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.muted },
   preBadge: {
     flexDirection: "row",
     alignItems: "center",

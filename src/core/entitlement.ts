@@ -8,6 +8,7 @@ import type { PlanTier } from "./types";
 export type PaidFeature =
   | "periodAnalysis" // 기간 분석 (월/연)
   | "trendGraph" // 추이 그래프
+  | "insights" // 장소·날씨·준비량 인사이트
   | "pcWeb" // PC 웹 조회
   | "dataExport" // 데이터 내보내기
   | "adFree"; // 광고 제거
@@ -15,6 +16,7 @@ export type PaidFeature =
 export const PAID_FEATURES: readonly PaidFeature[] = [
   "periodAnalysis",
   "trendGraph",
+  "insights",
   "pcWeb",
   "dataExport",
   "adFree",
@@ -34,6 +36,7 @@ export function canUse(tier: PlanTier, feature: PaidFeature): boolean {
 export const TRIAL_FEATURES: readonly PaidFeature[] = [
   "periodAnalysis",
   "trendGraph",
+  "insights",
   "dataExport",
 ];
 
@@ -65,6 +68,7 @@ export function shouldShowSessionAd(tier: PlanTier): boolean {
 export const PAID_FEATURE_LABEL: Record<PaidFeature, string> = {
   periodAnalysis: "기간 분석 (월/연)",
   trendGraph: "추이 그래프",
+  insights: "장소·날씨 인사이트",
   pcWeb: "PC 웹 조회",
   dataExport: "데이터 내보내기",
   adFree: "광고 제거",

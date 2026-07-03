@@ -1,12 +1,14 @@
 import { router } from "expo-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../../data/AppData";
 import { Badge, Card, Icon, LockChip, MoneyText } from "../../ui/components";
 import { TrendChart } from "../../components/trend-chart";
+import { NativeAdCard } from "../../ads/NativeAdCard";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../../theme/tokens";
 import {
+  canUse,
   canUseFeature,
   dateKey,
   filterByPeriodPrefix,
@@ -33,6 +35,9 @@ export default function SalesScreen() {
   const now = Date.now();
   const canPeriod = canUseFeature(planTier, "periodAnalysis", trialUntil, now);
   const canTrend = canUseFeature(planTier, "trendGraph", trialUntil, now);
+  const canInsights = canUseFeature(planTier, "insights", trialUntil, now);
+  // Native ads show for free-tier only (paid removes ads via the adFree feature).
+  const showAds = !canUse(planTier, "adFree");
   const trialActive = trialUntil != null && now < trialUntil;
   const trialHoursLeft = trialActive
     ? Math.max(1, Math.ceil((trialUntil - now) / (60 * 60 * 1000)))
@@ -148,6 +153,40 @@ export default function SalesScreen() {
           )}
         </Card>
 
+        {/* 2.5 insights entry — paid/trial gates entry, not the screen itself */}
+        {canInsights ? (
+          <Pressable onPress={() => router.push("/insights")}>
+            <Card style={styles.insightsCard}>
+              <View style={styles.insightsLeft}>
+                <View style={styles.insightsIcon}>
+                  <Icon name="insights" size={20} color={colors.accent} />
+                </View>
+                <View style={styles.insightsTextCol}>
+                  <Text style={styles.insightsTitle}>장소·날씨 인사이트</Text>
+                  <Text style={styles.insightsSub}>어디서·어떤 날씨에 잘 팔렸는지 보기</Text>
+                </View>
+              </View>
+              <Icon name="chevron-right" size={22} color={colors.muted2} />
+            </Card>
+          </Pressable>
+        ) : (
+          <Card style={styles.insightsCard}>
+            <View style={styles.insightsLeft}>
+              <View style={styles.insightsIconLocked}>
+                <Icon name="lock" size={18} color={colors.gold} />
+              </View>
+              <View style={styles.insightsTextCol}>
+                <View style={styles.insightsTitleRow}>
+                  <Text style={styles.insightsTitle}>장소·날씨 인사이트</Text>
+                  <LockChip label="유료" />
+                </View>
+                <Text style={styles.insightsSub}>유료 플랜에서 잠금 해제</Text>
+                <TrialButton watching={watchingAd} onPress={watchAdForTrial} />
+              </View>
+            </View>
+          </Card>
+        )}
+
         {/* 3. menu ranking */}
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>메뉴별 판매 TOP</Text>
@@ -226,28 +265,36 @@ export default function SalesScreen() {
           {orders.length === 0 ? (
             <Text style={styles.muted}>{label} 주문이 없어요</Text>
           ) : (
-            orders.map((o) => (
-              <Pressable
-                key={o.orderId}
-                style={styles.orderRow}
-                onPress={() => router.push({ pathname: "/order/[id]", params: { id: o.orderId } })}
-              >
-                <View style={styles.orderLeft}>
-                  <Text style={styles.orderTime}>
-                    {new Date(o.ts).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
-                  </Text>
-                  <Text style={[styles.orderSummary, o.voided && styles.strike]} numberOfLines={1}>
-                    {o.lines.map((l) => `${l.menuName}×${l.qty}`).join(", ")}
-                  </Text>
-                  <View style={styles.orderMeta}>
-                    <Text style={styles.orderBy}>{staffName(o.enteredBy)}</Text>
-                    {o.voided ? <Badge tone="danger">취소</Badge> : null}
-                    {o.lateSynced ? <Badge tone="gold">지각 동기화</Badge> : null}
+            orders.map((o, idx) => (
+              <Fragment key={o.orderId}>
+                <Pressable
+                  style={styles.orderRow}
+                  onPress={() => router.push({ pathname: "/order/[id]", params: { id: o.orderId } })}
+                >
+                  <View style={styles.orderLeft}>
+                    <Text style={styles.orderTime}>
+                      {new Date(o.ts).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}
+                    </Text>
+                    <Text style={[styles.orderSummary, o.voided && styles.strike]} numberOfLines={1}>
+                      {o.lines.map((l) => `${l.menuName}×${l.qty}`).join(", ")}
+                    </Text>
+                    <View style={styles.orderMeta}>
+                      <Text style={styles.orderBy}>{staffName(o.enteredBy)}</Text>
+                      {o.voided ? <Badge tone="danger">취소</Badge> : null}
+                      {o.lateSynced ? <Badge tone="gold">지각 동기화</Badge> : null}
+                    </View>
                   </View>
-                </View>
-                <Text style={[styles.orderAmount, o.voided && styles.strike]}>{formatWon(o.gross)}</Text>
-                <Icon name="chevron-right" size={20} color={colors.muted2} />
-              </Pressable>
+                  <Text style={[styles.orderAmount, o.voided && styles.strike]}>{formatWon(o.gross)}</Text>
+                  <Icon name="chevron-right" size={20} color={colors.muted2} />
+                </Pressable>
+                {/* Free tier: one native ad after the 5th order (or after the
+                    last one when there are fewer than 5). */}
+                {showAds && idx === Math.min(4, orders.length - 1) ? (
+                  <View style={styles.adSlot}>
+                    <NativeAdCard />
+                  </View>
+                ) : null}
+              </Fragment>
             ))
           )}
         </Card>
@@ -354,6 +401,15 @@ const styles = StyleSheet.create({
   addExpenseText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.accent },
   sectionTitle: { fontSize: fontSize.body, fontWeight: fontWeight.heavy, color: colors.ink },
   muted: { fontSize: fontSize.bodySm, color: colors.muted },
+  insightsCard: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.md },
+  insightsLeft: { flex: 1, flexDirection: "row", alignItems: "center", gap: spacing.md },
+  insightsIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.accentSoft, alignItems: "center", justifyContent: "center" },
+  insightsIconLocked: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.goldSoft, alignItems: "center", justifyContent: "center" },
+  insightsTextCol: { flex: 1, gap: 4 },
+  insightsTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  insightsTitle: { fontSize: fontSize.body, fontWeight: fontWeight.heavy, color: colors.ink },
+  insightsSub: { fontSize: fontSize.caption, color: colors.muted },
+  adSlot: { marginTop: spacing.md },
   lockArea: { alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl, backgroundColor: colors.surfaceAlt, borderRadius: radii.cardSm },
   lockIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.goldSoft, alignItems: "center", justifyContent: "center" },
   lockText: { fontSize: fontSize.bodySm, color: colors.ink2, fontWeight: fontWeight.semibold },

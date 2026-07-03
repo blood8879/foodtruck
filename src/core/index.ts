@@ -7,3 +7,4 @@ export * from "./csv";
 export * from "./series";
 export * from "./events";
 export * from "./entitlement";
+export * from "./insights";

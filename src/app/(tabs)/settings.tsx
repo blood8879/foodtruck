@@ -106,6 +106,20 @@ export default function SettingsScreen() {
           </Card>
         </Pressable>
 
+        {/* schedule / 영업 일정 */}
+        <Pressable onPress={() => router.push("/schedule")} accessibilityRole="button">
+          <Card style={styles.truckCard}>
+            <View style={styles.truckIcon}>
+              <Icon name="calendar-month" size={22} color={colors.accent} />
+            </View>
+            <View style={styles.flex1}>
+              <Text style={styles.truckName}>영업 일정</Text>
+              <Text style={styles.truckSub}>날짜별 장소·메모를 캘린더로 관리</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={colors.muted2} />
+          </Card>
+        </Pressable>
+
         {/* staff management */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>직원 관리</Text>

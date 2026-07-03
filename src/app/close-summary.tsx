@@ -5,8 +5,9 @@ import { useAppData } from "../data/AppData";
 import { capAllowsAd } from "../ads/adGate";
 import { cancelCloseReminder } from "../notifications/closeReminder";
 import { AppButton, Card, Icon, MoneyText } from "../ui/components";
+import { NativeAdCard } from "../ads/NativeAdCard";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../theme/tokens";
-import { formatWon, shouldShowSessionAd, sumExpenses, summarizeByPayment } from "../core";
+import { canUse, formatWon, shouldShowSessionAd, sumExpenses, summarizeByPayment } from "../core";
 import { PAYMENT_METHOD_LABELS, type PaymentMethod } from "../core/types";
 
 const PAY_ORDER: PaymentMethod[] = ["card", "cash", "transfer", "other"];
@@ -16,6 +17,8 @@ export default function CloseSummaryScreen() {
   const byPayment = summarizeByPayment(ordersToday);
   const payRows = PAY_ORDER.filter((m) => byPayment[m].gross > 0);
   const expenseTotal = sumExpenses(expensesToday);
+  // Native ad for free tier only (paid removes ads via the adFree feature).
+  const showAd = !!truck && !canUse(truck.planTier, "adFree");
 
   async function endBusiness() {
     closeSession(ownerId);
@@ -90,6 +93,12 @@ export default function CloseSummaryScreen() {
         ) : null}
       </View>
 
+      {showAd ? (
+        <View style={styles.adSlot}>
+          <NativeAdCard />
+        </View>
+      ) : null}
+
       <View style={styles.footer}>
         <AppButton title="영업 종료" variant="dark" icon="stop-circle" large onPress={endBusiness} />
         {truck && shouldShowSessionAd(truck.planTier) ? (
@@ -116,6 +125,7 @@ const styles = StyleSheet.create({
   count: { fontSize: fontSize.bigNumberSm, fontWeight: fontWeight.heavy, color: colors.ink },
   payAmount: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.ink, ...tabularNums },
   expenseAmount: { fontSize: fontSize.body, fontWeight: fontWeight.bold, color: colors.danger, ...tabularNums },
+  adSlot: { paddingHorizontal: spacing.xl, paddingBottom: spacing.md },
   footer: { paddingHorizontal: spacing.xl, paddingBottom: spacing.sm, gap: spacing.sm },
   caption: { textAlign: "center", fontSize: fontSize.caption, color: colors.muted },
 });
