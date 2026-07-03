@@ -50,5 +50,9 @@ begin
 end;
 $$;
 
+-- Supabase grants EXECUTE to anon/authenticated on new public functions via
+-- ALTER DEFAULT PRIVILEGES, so revoking from PUBLIC alone is not enough — anon
+-- must be revoked explicitly (the auth.uid() check inside is defense in depth).
 revoke all on function regenerate_invite_code(uuid) from public;
+revoke execute on function regenerate_invite_code(uuid) from anon;
 grant execute on function regenerate_invite_code(uuid) to authenticated;

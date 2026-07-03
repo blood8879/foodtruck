@@ -58,7 +58,12 @@ alter table event alter column seq drop identity if exists;
 -- be able to draw from the sequence.
 grant usage on sequence event_seq to authenticated, service_role;
 
-create or replace function assign_event_seq() returns trigger language plpgsql as $$
+-- search_path is pinned (linter 0011): the function body resolves event_seq
+-- against public regardless of the caller's search_path.
+create or replace function assign_event_seq() returns trigger
+language plpgsql
+set search_path = public
+as $$
 begin
   -- Serialize inserts per truck, THEN draw seq. The lock is held to commit, so
   -- (per truck) seq order == commit order. See the file header for the full
