@@ -2,6 +2,7 @@ import { router } from "expo-router";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
+import { capAllowsAd } from "../ads/adGate";
 import { AppButton, Card, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../theme/tokens";
 import { formatWon, shouldShowSessionAd, summarizeByPayment } from "../core";
@@ -14,9 +15,10 @@ export default function CloseSummaryScreen() {
   const byPayment = summarizeByPayment(ordersToday);
   const payRows = PAY_ORDER.filter((m) => byPayment[m].gross > 0);
 
-  function endBusiness() {
+  async function endBusiness() {
     closeSession(ownerId);
-    if (truck && shouldShowSessionAd(truck.planTier)) {
+    const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());
+    if (showAd) {
       router.replace({ pathname: "/ad", params: { phase: "close" } });
     } else {
       router.replace("/session-start");

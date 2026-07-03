@@ -89,6 +89,20 @@ export class MemoryStore implements Store {
     }
   }
 
+  setInviteCode(code: string): void {
+    if (this.truck) {
+      this.truck = { ...this.truck, inviteCode: code };
+      this.persist();
+    }
+  }
+
+  updateTruck(info: { name: string; ownerName: string }): void {
+    if (this.truck) {
+      this.truck = { ...this.truck, name: info.name, ownerName: info.ownerName };
+      this.persist();
+    }
+  }
+
   listStaff(): Staff[] {
     return [...this.staff].sort((a, b) =>
       a.role === b.role ? a.name.localeCompare(b.name) : a.role === "owner" ? -1 : 1,

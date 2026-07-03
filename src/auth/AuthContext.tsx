@@ -31,6 +31,8 @@ interface AuthValue {
   createTruck: (truckName: string, ownerName: string) => Promise<void>;
   /** Join an existing truck as staff via invite code. */
   joinTruck: (inviteCode: string, staffName: string) => Promise<void>;
+  /** Reflect a locally-rotated invite code so the signed-in UI stays in sync. */
+  updateInviteCode: (code: string) => void;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -191,6 +193,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateInviteCode = useCallback((code: string) => {
+    setInviteCode(code);
+  }, []);
+
   const value: AuthValue = {
     configured,
     loading,
@@ -206,6 +212,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut,
     createTruck,
     joinTruck,
+    updateInviteCode,
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

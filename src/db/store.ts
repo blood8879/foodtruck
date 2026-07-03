@@ -87,6 +87,14 @@ export class Repository implements Store {
     this.db.run("UPDATE truck SET plan_tier = ?", [tier]);
   }
 
+  setInviteCode(code: string): void {
+    this.db.run("UPDATE truck SET invite_code = ?", [code]);
+  }
+
+  updateTruck(info: { name: string; ownerName: string }): void {
+    this.db.run("UPDATE truck SET name = ?, owner_name = ?", [info.name, info.ownerName]);
+  }
+
   listStaff(): Staff[] {
     return this.db
       .all<{ id: string; name: string; role: string; pin: string }>(

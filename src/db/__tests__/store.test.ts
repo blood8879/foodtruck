@@ -51,6 +51,22 @@ describe("Repository masters", () => {
     expect(repo.getTruck()?.planTier).toBe("paid");
   });
 
+  it("rotates the invite code, invalidating the previous one", () => {
+    const before = repo.ensureTruck({ name: "t", ownerName: "o" }).inviteCode;
+    repo.setInviteCode("ZZ9X2");
+    const after = repo.getTruck()?.inviteCode;
+    expect(after).toBe("ZZ9X2");
+    expect(after).not.toBe(before);
+  });
+
+  it("edits business name and owner display name", () => {
+    repo.ensureTruck({ name: "옛상호", ownerName: "옛사장" });
+    repo.updateTruck({ name: "동대문핫도그", ownerName: "김사장" });
+    const t = repo.getTruck();
+    expect(t?.name).toBe("동대문핫도그");
+    expect(t?.ownerName).toBe("김사장");
+  });
+
   it("upserts, edits, sold-out toggles and deletes menus", () => {
     repo.upsertMenu(burger);
     expect(repo.listMenus()).toHaveLength(1);

@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
 import { useAuth } from "../auth/AuthContext";
+import { capAllowsAd } from "../ads/adGate";
 import { AppButton, Card, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
 import {
@@ -32,9 +33,10 @@ export default function SessionStartScreen() {
     weekday: "short",
   });
 
-  function startBusiness() {
+  async function startBusiness() {
     openSession(ownerId);
-    if (truck && shouldShowSessionAd(truck.planTier)) {
+    const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());
+    if (showAd) {
       router.replace({ pathname: "/ad", params: { phase: "open" } });
     } else {
       router.replace("/(tabs)");

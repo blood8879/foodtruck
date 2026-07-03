@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../../data/AppData";
 import { useAuth } from "../../auth/AuthContext";
@@ -8,10 +8,21 @@ import { colors, fontSize, fontWeight, radii, spacing } from "../../theme/tokens
 import { PAID_FEATURES, PAID_FEATURE_LABEL } from "../../core";
 
 export default function SettingsScreen() {
-  const { truck, staff, setPlanTier } = useAppData();
+  const { truck, staff, setPlanTier, regenerateInviteCode } = useAppData();
   const { inviteCode, configured, userId, email, signOut } = useAuth();
   const shownInvite = inviteCode ?? truck?.inviteCode ?? "-----";
   const paid = truck?.planTier === "paid";
+
+  function confirmRegenerate() {
+    Alert.alert(
+      "초대코드 재발급",
+      "기존 초대코드는 즉시 무효화됩니다. 계속하시겠습니까?",
+      [
+        { text: "취소", style: "cancel" },
+        { text: "재발급", style: "destructive", onPress: regenerateInviteCode },
+      ],
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -21,16 +32,18 @@ export default function SettingsScreen() {
 
       <ScrollView contentContainerStyle={styles.body}>
         {/* truck info */}
-        <Card style={styles.truckCard}>
-          <View style={styles.truckIcon}>
-            <Icon name="local-shipping" size={22} color={colors.accent} />
-          </View>
-          <View style={styles.flex1}>
-            <Text style={styles.truckName}>{truck?.name ?? "내 푸드트럭"}</Text>
-            <Text style={styles.truckSub}>{truck?.ownerName ?? "사장님"}</Text>
-          </View>
-          <Icon name="chevron-right" size={20} color={colors.muted2} />
-        </Card>
+        <Pressable onPress={() => router.push("/truck-edit")} accessibilityRole="button">
+          <Card style={styles.truckCard}>
+            <View style={styles.truckIcon}>
+              <Icon name="local-shipping" size={22} color={colors.accent} />
+            </View>
+            <View style={styles.flex1}>
+              <Text style={styles.truckName}>{truck?.name ?? "내 푸드트럭"}</Text>
+              <Text style={styles.truckSub}>{truck?.ownerName ?? "사장님"}</Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={colors.muted2} />
+          </Card>
+        </Pressable>
 
         {/* staff management */}
         <View style={styles.section}>
@@ -54,7 +67,7 @@ export default function SettingsScreen() {
                 <Text style={styles.inviteCode}>초대코드 {shownInvite}</Text>
                 <Text style={styles.inviteNote}>무료 플랜에서도 다중 직원 사용 가능</Text>
               </View>
-              <AppButton title="발급" variant="ghost" onPress={() => {}} />
+              <AppButton title="발급" variant="ghost" onPress={confirmRegenerate} />
             </View>
           </Card>
         </View>

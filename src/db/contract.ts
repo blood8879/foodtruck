@@ -11,6 +11,10 @@ export interface Store {
   getTruck(): Truck | null;
   ensureTruck(opts: { name: string; ownerName: string }): Truck;
   setPlanTier(tier: "free" | "paid"): void;
+  /** Rotate the local invite code (owner shares this with staff). */
+  setInviteCode(code: string): void;
+  /** Edit truck masters (business name + owner display name). */
+  updateTruck(info: { name: string; ownerName: string }): void;
   listStaff(): Staff[];
   upsertStaff(s: Staff): void;
   listMenus(): Menu[];

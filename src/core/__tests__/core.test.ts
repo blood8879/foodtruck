@@ -10,6 +10,7 @@ import {
   foldSessions,
   formatWon,
   getActiveSession,
+  inviteCode,
   lineFromMenu,
   makeOrderPlaced,
   makeOrderVoided,
@@ -231,6 +232,29 @@ describe("uuidv7", () => {
     const b = uuidv7(2_000);
     expect(a < b).toBe(true);
     expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  });
+});
+
+describe("inviteCode", () => {
+  it("is a 5-char code from the unambiguous uppercase alphabet by default", () => {
+    for (let i = 0; i < 200; i++) {
+      const code = inviteCode();
+      expect(code).toHaveLength(5);
+      // no ambiguous chars (I, O, 0, 1) and only allowed uppercase alphanumerics
+      expect(code).toMatch(/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/);
+    }
+  });
+
+  it("honours a custom length", () => {
+    expect(inviteCode(8)).toHaveLength(8);
+    expect(inviteCode(1)).toHaveLength(1);
+  });
+
+  it("rotates to a different value (regeneration invalidates the old code)", () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 50; i++) seen.add(inviteCode());
+    // astronomically unlikely to collide into a single value across 50 draws
+    expect(seen.size).toBeGreaterThan(1);
   });
 });
 

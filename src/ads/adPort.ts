@@ -6,7 +6,15 @@
  */
 export const hasNativeAds = false;
 
-/** Show an interstitial and resolve when finished. No-op without native ads. */
-export async function showInterstitialAd(): Promise<void> {
+/** Options for a single interstitial request (see adPort.native.ts). */
+export interface ShowAdOptions {
+  onShown?: () => void;
+}
+
+/**
+ * Show an interstitial and resolve when finished. No-op without native ads —
+ * there is no real impression, so `onShown` is intentionally never called.
+ */
+export async function showInterstitialAd(_opts: ShowAdOptions = {}): Promise<void> {
   // web / Expo Go: no real ad SDK available.
 }

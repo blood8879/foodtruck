@@ -16,11 +16,13 @@ import { StoreSyncLocal } from "../sync/storeLocal";
 import { createSupabaseSyncPort } from "../sync/supabasePort";
 import { syncMenus } from "../sync/menuSync";
 import { isSyncConfigured } from "../sync/config";
+import { getSupabase } from "../sync/supabaseClient";
 import {
   dateKey,
   filterByDateKey,
   foldOrders,
   getActiveSession,
+  inviteCode,
   lineFromMenu,
   makeOrderPlaced,
   makeOrderVoided,
@@ -72,6 +74,10 @@ interface AppDataValue {
   placeOrder: (args: PlaceOrderArgs) => void;
   voidOrder: (orderId: string, by: string) => void;
   setPlanTier: (tier: PlanTier) => void;
+  /** Rotate the invite code (invalidates the previous one). Local-first. */
+  regenerateInviteCode: () => void;
+  /** Edit business name + owner display name. Local-first. */
+  updateTruckInfo: (info: { name: string; ownerName: string }) => void;
   ownerId: string;
 }
 
@@ -229,6 +235,55 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setPlanTier: (tier) => {
       repo.setPlanTier(tier);
       refresh();
+    },
+    regenerateInviteCode: () => {
+      // Local-first: rotate immediately so guests/offline users get a new code.
+      const code = inviteCode();
+      repo.setInviteCode(code);
+      refresh();
+      // Signed-in owner: rotate the server row best-effort. The RPC returns the
+      // server-authoritative code; reconcile local + auth to it on success.
+      // Failure is non-fatal — the local rotation already succeeded.
+      if (auth.configured && auth.userId && auth.truckId) {
+        const sb = getSupabase();
+        if (sb) {
+          (async () => {
+            const { data, error } = await sb.rpc("regenerate_invite_code", {
+              p_truck_id: auth.truckId,
+            });
+            if (error || !data) return;
+            const serverCode = String(data);
+            repo.setInviteCode(serverCode);
+            auth.updateInviteCode(serverCode);
+            refresh();
+          })().catch(() => {
+            /* offline / transient — local code stands */
+          });
+        }
+      }
+    },
+    updateTruckInfo: ({ name, ownerName }) => {
+      // Local-first update of the truck masters.
+      repo.updateTruck({ name, ownerName });
+      refresh();
+      // Signed-in owner: push best-effort. Server keeps the business name on
+      // truck and the owner display name on the owner's membership row.
+      if (auth.configured && auth.userId && auth.truckId) {
+        const sb = getSupabase();
+        if (sb) {
+          (async () => {
+            await sb.from("truck").update({ name }).eq("id", auth.truckId);
+            await sb
+              .from("membership")
+              .update({ staff_name: ownerName })
+              .eq("truck_id", auth.truckId)
+              .eq("user_id", auth.userId)
+              .eq("role", "owner");
+          })().catch(() => {
+            /* offline / transient — local edit stands */
+          });
+        }
+      }
     },
   };
 

@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
 import { hasNativeAds, showInterstitialAd } from "../ads/adPort";
+import { capStorage } from "../ads/capStorage";
+import { recordAdShown } from "../ads/frequencyCap";
 
 /**
  * Session open/close interstitial (free tier only).
@@ -25,10 +27,16 @@ export default function AdScreen() {
     else router.replace("/(tabs)");
   }
 
-  // Native: real interstitial -> proceed when finished.
+  // Native: real interstitial -> proceed when finished. Count the impression
+  // against the daily cap only when the ad actually opens (onShown), never on
+  // load failure / no-fill / fail-open timeout.
   useEffect(() => {
     if (!hasNativeAds) return;
-    showInterstitialAd().finally(proceed);
+    showInterstitialAd({
+      onShown: () => {
+        void recordAdShown(capStorage, Date.now());
+      },
+    }).finally(proceed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
