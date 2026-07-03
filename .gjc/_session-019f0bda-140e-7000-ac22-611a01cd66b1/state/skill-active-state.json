@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "active": true,
+  "skill": "ultragoal",
+  "phase": "active",
+  "updated_at": "2026-06-28T14:53:20.475Z",
+  "session_id": "019f0bda-140e-7000-ac22-611a01cd66b1",
+  "active_skills": [
+    {
+      "skill": "ultragoal",
+      "phase": "active",
+      "active": true,
+      "activated_at": "2026-06-28T14:53:20.475Z",
+      "updated_at": "2026-06-28T14:53:20.475Z",
+      "session_id": "019f0bda-140e-7000-ac22-611a01cd66b1",
+      "hud": {
+        "version": 1,
+        "chips": [
+          {
+            "label": "goals",
+            "value": "1/5",
+            "priority": 10
+          },
+          {
+            "label": "current",
+            "value": "G002:M2 동기화 + PC 웹 조회",
+            "priority": 20
+          },
+          {
+            "label": "status",
+            "value": "active",
+            "priority": 30
+          },
+          {
+            "label": "ledger",
+            "value": "blocker_classified:G005",
+            "priority": 35
+          }
+        ],
+        "updated_at": "2026-06-28T14:53:20.474Z"
+      },
+      "receipt": {
+        "version": 1,
+        "skill": "ultragoal",
+        "owner": "gjc-runtime",
+        "command": "gjc ultragoal (reconcile)",
+        "state_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/skill-active-state.json",
+        "storage_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/ultragoal-state.json",
+        "mutated_at": "2026-06-28T14:53:20.465Z",
+        "fresh_until": "2026-06-28T15:23:20.465Z",
+        "status": "fresh",
+        "mutation_id": "ultragoal:reconcile:2026-06-28T14:53:20.465Z",
+        "verb": "reconcile",
+        "forced": true,
+        "from_phase": "active",
+        "to_phase": "active"
+      },
+      "source_state_revision": 18,
+      "state_revision": 15
+    }
+  ],
+  "active_subskills": [],
+  "source_state_revision": 101,
+  "state_revision": 101
+}

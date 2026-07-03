@@ -1,0 +1,713 @@
+{
+  "active": false,
+  "version": 2,
+  "current_phase": "handoff",
+  "skill": "deep-interview",
+  "cwd": "/Users/yunjihwan/Documents/project/foodtruck",
+  "updated_at": "2026-06-28T04:40:16.320Z",
+  "session_id": "019f0bda-140e-7000-ac22-611a01cd66b1",
+  "threshold": 0.05,
+  "threshold_source": "default",
+  "receipt": {
+    "version": 1,
+    "skill": "deep-interview",
+    "owner": "gjc-state-cli",
+    "command": "gjc state deep-interview handoff --to ralplan",
+    "state_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/skill-active-state.json",
+    "storage_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/deep-interview-state.json",
+    "mutated_at": "2026-06-28T04:40:16.320Z",
+    "fresh_until": "2026-06-28T05:10:16.320Z",
+    "status": "fresh",
+    "mutation_id": "deep-interview:handoff:ralplan:2026-06-28T04:40:16.320Z",
+    "content_sha256": {
+      "algorithm": "sha256",
+      "value": "a67710e4f577a693787c50e3e21cfb2daba332d09fc65da1f2547cf2cc36f945",
+      "covered_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/state/deep-interview-state.json",
+      "computed_at": "2026-06-28T04:40:16.338Z"
+    }
+  },
+  "spec_slug": "foodtruck-menu-sales-mvp",
+  "spec_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/specs/deep-interview-foodtruck-menu-sales-mvp.md",
+  "spec_sha256": "fc1f78474fd5c7b13aa9fe65bc77e288624933532c0bf5e6b2420c66e3b4f78a",
+  "spec_stage": "final",
+  "spec_persisted_at": "2026-06-28T04:39:59.341Z",
+  "state": {
+    "threshold": 0.05,
+    "threshold_source": "default",
+    "rounds": [
+      {
+        "round_key": "ft-mvp-001::r:0::q:topology",
+        "round": 0,
+        "question_id": "topology",
+        "question_text": "Round 0 | 구성요소 확정 | 애매함: 아직 점수 없음\n\n네 설명을 이렇게 읽었어 — MVP에 들어가는 핵심 구성요소 2개 + 나중으로 미루는 것 2개:\n\n[MVP 활성]\n1. 메뉴 관리: 푸드트럭에서 파는 메뉴 항목을 등록/수정/삭제하고 관리하는 기능\n2. 매출 관리: 판매·매출 데이터를 기록하고 조회·집계하는 기능\n\n[지금은 제외 / 나중에]\n3. 실시간 위치 안내 (deferred)\n4. 결제 연동 (deferred)\n\n이 뼈대가 맞아? 추가하거나, 빼거나, 합치거나, 쪼개거나, 명시적으로 미룰 게 있을까?",
+        "question_hash": "929ad191aa2d420394629e626310d1bd",
+        "answer_hash": "3b4606c49722768fdc281a4a220ba603",
+        "selected_options": [],
+        "custom_input": "메뉴와 매출관리, 재고 관리도 넣고 이 메뉴의 원가율도 포함해서 해당일의 매출/순이익 등도 볼수 있게 해주고 싶어. 그리고 일/월/연별 매출도 확인가능한 메뉴와 실제 장사 시 에 바쁠꺼니까 매장 pos처럼 간단하게 주문등록으로 그날 매출관리를 할 수 있게 할꺼야.",
+        "component": "topology",
+        "dimension": "topology",
+        "ambiguity_at_ask": 1,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T01:39:58.751Z"
+      },
+      {
+        "round_key": "ft-mvp-001::r:0::q:topology_v2",
+        "round": 0,
+        "question_id": "topology_v2",
+        "question_text": "Round 0 (재확인) | 구성요소 확정 | 애매함: 아직 점수 없음\n\n다시 읽으니 MVP 핵심 구성요소가 4개로 늘어난 것 같아:\n\n[MVP 활성]\n1. 메뉴 관리: 메뉴 등록/수정/삭제 + 판매가 + 원가(재료비) + 원가율 관리\n2. 주문 등록 (POS): 장사 중에 빠르게 주문을 찍어 그날 매출을 쌓는 간단 POS형 입력 화면\n3. 매출·수익 분석: 일/월/연별 매출, 원가 반영한 순이익 조회/대시보드\n4. 재고 관리: 재료/품목 재고 추적\n\n[지금은 제외 / 나중에]\n5. 실시간 위치 안내 (deferred)\n6. 외부 결제 연동 (deferred)\n\n이 4개로 가면 돼? 아니면 어떤 걸 합치거나 더 쌌게 해야 할까?",
+        "question_hash": "c7ea007a0923220a1c6fa69c4bdf9cc7",
+        "answer_hash": "e18f0681a2e23c293b41e02a60468815",
+        "selected_options": [
+          "맞아, 이 4개로 가자"
+        ],
+        "component": "topology",
+        "dimension": "topology",
+        "ambiguity_at_ask": 1,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T01:41:48.568Z"
+      },
+      {
+        "round_key": "ft-mvp-001::r:1::q:menu_cost_model",
+        "round": 1,
+        "question_id": "menu_cost_model",
+        "question_text": "메뉴 하나의 '원가'를 어떻게 잡고 싶어? 이게 재고 관리와도 직결돼서 \\ uc911요해.\n\n예를 들면 '서울더블버거' 한 개의 원가를 —\n\nA) 사장님이 그냥 메뉴마다 원가 금액을 직접 입력 (예: 원가 3,000원). 간단하지만 재료 사용량과 재고는 자동 연결되지 않음.\n\nB) 메뉴를 '레시피(재료 구성)'로 등록 — 빵 1장, 패티 100g, 치즈 1장 식으로 등록하고, 재료 단가로 원가를 자동 계산. 주문이 들어오면 재료 재고도 자동 차감. 정확하지만 초기 입력이 좀 많음.\n\nC) 둘 다 — 기본은 직접 입력, 원하는 메뉴만 레시피로 세분화.\n\n어느 쪽이 사장님 입장에서 맞을까?",
+        "question_hash": "eae570f12eea4d0330ba38eb2f888874",
+        "answer_hash": "b0f699fae95478ca0555a752bdbeef9a",
+        "selected_options": [
+          "C) 둘 다 지원 (기본 직접 입력 + 선택적 레시피)"
+        ],
+        "component": "menu-management",
+        "dimension": "goal",
+        "ambiguity_at_ask": 1,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T01:46:22.830Z"
+      },
+      {
+        "round": 1,
+        "component": "menu-management",
+        "dimension": "goal",
+        "question": "메뉴 원가를 직접 입력/레시피 기반/둘 다 중 무엇으로?",
+        "answer": "C) 둘 다 지원 — 기본 직접 입력 + 선택적 레시피(재료 연동)",
+        "status": "scored",
+        "ambiguity_before": 1,
+        "ambiguity_after": 0.72,
+        "scores": {
+          "goal": 0.45,
+          "constraints": 0.2,
+          "criteria": 0.15
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:2::q:pos_flow",
+        "round": 2,
+        "question_id": "pos_flow",
+        "question_text": "장사 중에 주문이 들어왔을 때, 사장님이 폰/태블릿으로 어떻게 찍는 게 가장 현실적일까? 바쁜 상황이니까 탭 수가 적어야 해.\n\nA) 메뉴 버튼만 탭탭 — '버거 x2, 콜\\¶a x1' 식으로 메뉴 골라 수량만 올리고 [결제/완료] 한 번. 주문 단위로 기록.\n\nB) 그냠 그냥 '총액'만 입력 — 메뉴 구분 없이 8,000원 컅! 가장 빠르지만 메뉴별 판매량·원가 분석은 불가.\n\nC) A 방식이 기본이고, 급할 때만 B(빠른 금액 입력) 허용.\n\nD) 현금/카드 같은 결제수단도 주문마다 구분해서 찍고 싶은가? (이건 별도로 확인\\)",
+        "question_hash": "088786377d29d74b5120da513f1093bc",
+        "answer_hash": "17d77cd0678c61722a7d6777925512ee",
+        "selected_options": [
+          "A) 메뉴 버튼 탭 + 수량, 주문 단위 기록 (메뉴별 분석 가능)"
+        ],
+        "component": "order-pos",
+        "dimension": "goal",
+        "ambiguity_at_ask": 0.72,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T01:48:39.389Z"
+      },
+      {
+        "round": 1,
+        "component": "menu-management",
+        "dimension": "goal",
+        "answer": "C 둘 다 지원",
+        "status": "scored",
+        "ambiguity_after": 0.72
+      },
+      {
+        "round": 2,
+        "component": "order-pos",
+        "dimension": "goal",
+        "question": "POS 주문 입력 방식?",
+        "answer": "A) 메뉴 버튼 탭 + 수량, 주문 단위 기록",
+        "status": "scored",
+        "ambiguity_before": 0.72,
+        "ambiguity_after": 0.61,
+        "scores": {
+          "goal": 0.6,
+          "constraints": 0.3,
+          "criteria": 0.2
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:3::q:platform_offline",
+        "round": 3,
+        "question_id": "platform_offline",
+        "question_text": "이 앱을 주로 어디서 쓸\\u u 거야, 그리고 인터넷 없을 때도 주문을 찍을 수 있어야 해?\n\n푸드트럭 특성상 이게 중요해 — 장소 이동·지하·행사장에서 네트워크가 끊기는 일이 흔하니까.\n\n플랫폼:\n- 폰/태블릿 앛 일시구가 주력 (장사 현장은 모바일)\n- PC 웹도 필요 (집·사무실에서 정산·분석)\n\n오프라인:\n- 인터넷 없어도 주문 찍고 나중에 동기화 필요 vs 항상 온라인 가정",
+        "question_hash": "46327e74c82d0df3c35e851d42723eb4",
+        "answer_hash": "20b9b5d3a73d5bf039fc4d134fe60209",
+        "selected_options": [
+          "모바일 앱 + PC 웹 둘 다 (현장은 폰, 정산·분석은 PC), 오프라인 필수"
+        ],
+        "component": "order-pos",
+        "dimension": "constraints",
+        "ambiguity_at_ask": 0.61,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T01:50:18.167Z"
+      },
+      {
+        "round": 3,
+        "component": "order-pos",
+        "dimension": "constraints",
+        "question": "플랫폼·오프라인 제약?",
+        "answer": "모바일 앱 + PC 웹 둘 다, 오프라인 필수",
+        "status": "scored",
+        "ambiguity_before": 0.61,
+        "ambiguity_after": 0.535,
+        "scores": {
+          "goal": 0.6,
+          "constraints": 0.55,
+          "criteria": 0.2
+        },
+        "trigger": "D scope expansion(오프라인 동기화+멀티플랫폼) — 제약 질문으로 흡수, 종합 애매함은 하락"
+      },
+      {
+        "round_key": "ft-mvp-001::r:4::q:offline_scope",
+        "round": 4,
+        "question_id": "offline_scope",
+        "question_text": "아까 '오프라인 필수 + 폰·PC 둘 다'라고 했는데, 패널이 중요한 구분을 짚어줘. 좌하¶ — '오프라인 동작'과 '여러 기기 동시 동기화'는 다른 문제고, 뒤의 것이 구현 복잡도를 몇 배 키워.\n\n1인 푸드트럭 현실에서 실제로 어느 쌍이 맞을까?\n\nA) 현장은 폰 '한 대'로만 주문 찍고(오프라인 OK), PC 웹은 나중에 정산·분석용으로 볼 때만 사용. → 동시 편집 없음, 동기화 단순.\n\nB) 사장+알바가 동시에 여러 기기로 주문을 찍어야 함(피크타임). → 동시 다중 기기 동기화 필수(복잡도 큼).\n\nC) v1은 아예 폰 한 대로만(로컬). PC 웹·동기화는 v2로 미\\eb8ë8. → 가장 단순, 빠른 출시.\n\n(참고: 패널은 1인=대개 1기기라 B는 과투자 가능성을 지적했어)",
+        "question_hash": "1cad063df4b6d56ea96d17ec069a06f4",
+        "answer_hash": "908d019e1bd16f5a7f0144e8fdf6531b",
+        "selected_options": [
+          "A) 현장 폰 1대(오프라인) + PC웹은 조회전용, 동시편집 없음"
+        ],
+        "component": "order-pos",
+        "dimension": "constraints",
+        "ambiguity_at_ask": 0.535,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T01:57:35.249Z"
+      },
+      {
+        "round": 4,
+        "component": "order-pos",
+        "dimension": "constraints",
+        "question": "오프라인/멀티디바이스 범위?",
+        "answer": "A) 현장 폰 1대(오프라인 기록) + PC웹 조회전용, 동시편집 없음",
+        "status": "scored",
+        "ambiguity_before": 0.535,
+        "ambiguity_after": 0.44,
+        "scores": {
+          "goal": 0.65,
+          "constraints": 0.75,
+          "criteria": 0.25
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:5::q:profit_tax",
+        "round": 5,
+        "question_id": "profit_tax",
+        "question_text": "'순이익'을 볼 때 사장님이 원하는 게 무엇일까? 그리고 이 숫자를 세금 신고에도 쓸까? (패널 Researcher가 짚은 핵심 분기)\n\nMVP의 '순이익' 수준:\nA) 간단히 — 순이익 = 매출 − 판매된 메뉴의 원가(재료비)만. 임대료·인건비·세금은 제외. 현장에서 '오늘 남은 돈' 감 잡기용.\nB) 고정비까지 — 월 임대료·인건비·기름값 같은 고정/경비도 넣어서 진짜 남는 돈 계산.\nC) 세무까지 — 부가세·종소세 신고용 매출(현금/카드 분리, 공급가액/부가세)까지 고려. 세무사 전달·신고 목적.\n\n(결제수단 현금/카드 구분 기록이 필요한지가 여기서 갈림)",
+        "question_hash": "62fd1f456dc2bf1639ef7a7973789170",
+        "answer_hash": "2eb5ce17be62c2ae9edc682ff834bc96",
+        "selected_options": [
+          "A) 순이익=매출−원가(재료비)만, 현장 감잡기용 (결제수단 구분 불필요)"
+        ],
+        "component": "sales-profit-analytics",
+        "dimension": "goal",
+        "ambiguity_at_ask": 0.44,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:12:25.636Z"
+      },
+      {
+        "round": 5,
+        "component": "sales-profit-analytics",
+        "dimension": "goal",
+        "question": "순이익 정의·세무 목적?",
+        "answer": "A) 순이익=매출−원가(재료비)만, 현장 감잡기용, 결제수단 구분 불필요",
+        "status": "scored",
+        "ambiguity_before": 0.44,
+        "ambiguity_after": 0.44
+      },
+      {
+        "round": "5b",
+        "component": "staff-auth",
+        "dimension": "constraints",
+        "question": "(사용자 명세 변경)",
+        "answer": "사장이 직원을 추가할 수 있고 사장/알바 누구나 주문을 찍을 수 있어야 함",
+        "status": "scored",
+        "trigger": "A 모순(Round4 단일기기/동시편집없음 위배) + D 범위확장(직원·계정·권한 추가)",
+        "ambiguity_before": 0.44,
+        "ambiguity_after": 0.555,
+        "scores": {
+          "goal": 0.55,
+          "constraints": 0.45,
+          "criteria": 0.3
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:6::q:staff_concurrency",
+        "round": 6,
+        "question_id": "staff_concurrency",
+        "question_text": "사장·알바가 주문을 찍는다 했을 때, 실제 장사 풍경이 어느 쪽이야? 이게 동기화 설계를 갈라.\n\nA) 한 트럭에 기기 여러 대 — 사장 폰, 알바 폰 각자 동시에 주문을 찍는다(주문구가 둘). → 여러 기기 동시 입력 동기화 필요.\n\nB) 공용 기기 한 대를 돌려쓴다 — 트럭에 태블릿/폰 한 대 두고 그걸로만 찍는데, 누가 찍었는지(사장/알바)는 구분하고 싶다. → 단일 기기, 동시성 없음.\n\nC) 알바는 자기 폰으로 찍고 사장은 따로 본다 — 여러 기기이지만 보통 한 타임엔 한 명만 판매 찍음. → 멀티기기지만 실질 동시 충돌은 드\\ub38.\n\n어느 게 현실에 가까워?",
+        "question_hash": "d638e0e812aaa32b10ddc4b196ca4ab0",
+        "answer_hash": "1e9ebe998b90b8ba648462eea9fedda7",
+        "selected_options": [
+          "A) 여러 기기에서 동시에 주문 찍음(동시 입력 다발)"
+        ],
+        "component": "staff-auth",
+        "dimension": "constraints",
+        "ambiguity_at_ask": 0.555,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:19:05.499Z"
+      },
+      {
+        "round": 6,
+        "component": "staff-auth",
+        "dimension": "constraints",
+        "question": "다중 사용자 동시성/기기 모델?",
+        "answer": "A) 여러 기기에서 동시에 주문 찍음(동시 입력 다발)",
+        "status": "scored",
+        "ambiguity_before": 0.555,
+        "ambiguity_after": 0.475,
+        "scores": {
+          "goal": 0.6,
+          "constraints": 0.6,
+          "criteria": 0.35
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:7::q:price_snapshot",
+        "round": 7,
+        "question_id": "price_snapshot",
+        "question_text": "메뉴 가격이나 원가는 시간이 지나면 바뀌잖아(재료값 오르고, 가격 올리고). 그런데 '지난달에 판 버거'의 이익은 그때 가격·원가로 남아있어야 맞겠지?\n\n예시: 6월엔 버거 7,000원(원가 3,000) → 7월에 가격을 8,000으로 올림.\n\nA) 박제(권장) — 과거 주문은 그때 값(7,000/3,000)으로 영원히 고정. 메뉴 가격을 바꿔도 6월 매출·이익 숫자는 그대로. 일/월/연 통계가 항상 일관됨.\n\nB) 소급 반영 — 항상 '현재 메뉴 가격'으로 계산. 가격 바꾸면 과거 매출 숫자도 따라 바뀌.\n\n(A는 과거 장부가 신뢰할 수 있게 되고, B는 구현은 간단하지만 과거 수치가 들쎄들쎄 바뀜)",
+        "question_hash": "76c9223662d5791667e14d58dc5d2d0c",
+        "answer_hash": "45a267bbdfe0c7f3cdcdb38e9d78103e",
+        "selected_options": [
+          "A) 박제 — 과거 주문은 당시 가격·원가로 고정 (권장, 장부 신뢰)"
+        ],
+        "component": "sales-profit-analytics",
+        "dimension": "criteria",
+        "ambiguity_at_ask": 0.475,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:20:44.844Z"
+      },
+      {
+        "round": 7,
+        "component": "sales-profit-analytics",
+        "dimension": "criteria",
+        "question": "가격/원가 변경 시 과거 주문 박제 vs 소급?",
+        "answer": "A) 박제 — 과거 주문은 당시 가격·원가로 고정",
+        "status": "scored",
+        "ambiguity_before": 0.475,
+        "ambiguity_after": 0.395,
+        "scores": {
+          "goal": 0.65,
+          "constraints": 0.6,
+          "criteria": 0.55
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:8::q:inventory_depth",
+        "round": 8,
+        "question_id": "inventory_depth",
+        "question_text": "재고 관리를 어느 수준까지 원해? Simplifier는 이게 가장 복잡해질 수 있다고 짚었어.\n\nA) 가볍게 — 재료/품목 목록과 현재 수량을 사장님이 수동으로 적고 줄이는 수준(예: 패티 50장 남음). 주문과 자동 연동 안 함.\n\nB) 자동 차감 — 레시피 등록된 메뉴가 팔릴 때마다 재료 재고가 자동으로 줄어들고, 부족하면 알림. 정확하지만 레시피·단위 입력 부담 큼.\n\nC) 이번 MVP엔 재고 빼자 — 메뉴·POS·매출분석먼저 제대로 만들고 재고는 v2로. (Simplifier 권장)\n\n어느 게 사장님 현실에 맞을까?",
+        "question_hash": "05134df1e4ba7b1b43852be0895640a4",
+        "answer_hash": "05d02c370dba3f3431982b35039a4c2e",
+        "selected_options": [
+          "C) 이번 MVP엔 재고 제외(v2로 미룸)"
+        ],
+        "component": "inventory",
+        "dimension": "goal",
+        "ambiguity_at_ask": 0.395,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:39:30.771Z"
+      },
+      {
+        "round": 8,
+        "component": "inventory",
+        "dimension": "goal",
+        "question": "재고 관리 깊이/포함 여부?",
+        "answer": "C) 이번 MVP엔 재고 제외(v2로 미룸)",
+        "status": "scored",
+        "ambiguity_before": 0.395,
+        "ambiguity_after": 0.345,
+        "scores": {
+          "goal": 0.7,
+          "constraints": 0.65,
+          "criteria": 0.6
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:9::q:permissions",
+        "round": 9,
+        "question_id": "permissions",
+        "question_text": "알바(직원)에게 어디까지 보여줄까? 매출·원가는 사장 입장엔 민감한 정보일 수 있어.\n\nA) 알바는 주문만 — POS로 주문 찍기만 가능. 매출·순이익·원가·메뉴관리는 사장만. (가장 안전)\n\nB) 알바도 매출까지는 — 주문 + 그날 매출 합계는 보되, 원가·순이익·메뉴원가·장기 통계는 사장만.\n\nC) 구분 없음 — 둘 다 전부 봄. 가장 단순하지만 원가·이익이 알바에게도 노출.\n\n그리고 사장/알바 2단계 역할이면 충분해, 아니면 더 세분화 필요해?",
+        "question_hash": "75ae412e828296b0fa87da3f918b7a26",
+        "answer_hash": "5ba5b91d7f910cae441dd1c2f36f0dd1",
+        "selected_options": [
+          "A) 알바는 주문만, 나머지 전부 사장만 (권장, 사장/알바 2단계)"
+        ],
+        "component": "staff-auth",
+        "dimension": "criteria",
+        "ambiguity_at_ask": 0.345,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:42:22.277Z"
+      },
+      {
+        "round": 9,
+        "component": "staff-auth",
+        "dimension": "criteria",
+        "question": "역할별 권한 범위?",
+        "answer": "A) 알바는 주문만, 나머지 전부 사장만 (사장/알바 2단계)",
+        "status": "scored",
+        "ambiguity_before": 0.345,
+        "ambiguity_after": 0.28,
+        "scores": {
+          "goal": 0.75,
+          "constraints": 0.7,
+          "criteria": 0.7
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:10::q:void_semantics",
+        "round": 10,
+        "question_id": "void_semantics",
+        "question_text": "주문을 잘못 찍거나 손님이 취소/환불할 때 어떻게 처리하고 싶어? 그리고 그걸 알바도 할 수 있어야 해?\n\n[취소 방식]\nA) 취소하면 '취소 표시'로 명확히 남김 — 원주문은 기록에 남고 취소 이력도 보임(매출엔 제외). 장부·분석이 정확해짐.\nB) 그냥 지움 — 잘못 찍은 주문을 흔적 없이 삭제. 단순하지만 이력이 안 남음.\n\n[누가 취소하나]\nC) 알바도 자유롭게 취소 가능 (현장 속도 우선)\nD) 알바는 못 하고 사장만/사장 승인 필요 (탐나 방지)\n\n현실적으로 조합하면?",
+        "question_hash": "928854bd1c6fe54cc8f24fa5936b2a75",
+        "answer_hash": "a27d75986b2e0ebb6f499fe5794cb5b4",
+        "selected_options": [
+          "A+C) 취소 이력 남김 + 알바도 취소 가능 (권장: 정확성+현장속도)"
+        ],
+        "component": "order-pos",
+        "dimension": "criteria",
+        "ambiguity_at_ask": 0.28,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:45:56.573Z"
+      },
+      {
+        "round": 10,
+        "component": "order-pos",
+        "dimension": "criteria",
+        "question": "주문 취소/환불 처리 + 알바 권한?",
+        "answer": "A+C) 취소 이력 남김(보상 이벤트, 매출 제외) + 알바도 취소 가능",
+        "status": "scored",
+        "ambiguity_before": 0.28,
+        "ambiguity_after": 0.238,
+        "scores": {
+          "goal": 0.78,
+          "constraints": 0.72,
+          "criteria": 0.78
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:11::q:daily_stability",
+        "round": 11,
+        "question_id": "daily_stability",
+        "question_text": "상황: 알바 폰이 오프라인이었다가 다음날 아침에 동기화돼서, '어제 주문' 몇 건이 늦게 올라와. 그럼 사장님이 어제밤 확인한 '어제 매출 50만원'이 오늘 51만으로 바뀌게 돼. 이걸 어떻게 할까?\n\nA) 자동 반영(권장) — 늦게 들어온 주문도 그날 날짜로 합산돼 수치가 자동 교정됨. '어제 매출'이 더 정확해지지만 숈바뀜 수 있음. 단, 늦게 반영된 건은 표시해줌.\nB) 마감 lock — 사장이 하루를 '마감'하면 그 숫자 고정. 이후 들어온 주문은 별도 표시/조정으로 따로 다릌. 술자 확정감.\n\n(패널은 현금¶ 구분·결제수단이 없는 v1엔 복잡한 시재대조형 마감은 불필요하다고 봤음 — 이건 '숫자 안정성'만 정하는 거)",
+        "question_hash": "e98e8710047ab58172f972e8260142a8",
+        "answer_hash": "7629d81ca21df5649cb19d21ec1eb867",
+        "selected_options": [
+          "A) 자동 반영 + 늦게 들어온 건 표시 (권장, 단순+정확)"
+        ],
+        "component": "sales-profit-analytics",
+        "dimension": "criteria",
+        "ambiguity_at_ask": 0.238,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T02:59:01.182Z"
+      },
+      {
+        "round": 11,
+        "component": "sales-profit-analytics",
+        "dimension": "criteria",
+        "question": "백데이트 동기화 시 일매출 안정성?",
+        "answer": "A) 자동 반영 + 늦게 들어온 건 표시",
+        "status": "scored",
+        "ambiguity_before": 0.238,
+        "ambiguity_after": 0.191,
+        "scores": {
+          "goal": 0.8,
+          "constraints": 0.78,
+          "criteria": 0.85
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:12::q:account_invite",
+        "round": 12,
+        "question_id": "account_invite",
+        "question_text": "사장님과 알바가 어떻게 로그인하고, 알바는 어떻게 합류하면 좋을까? (한 트럭 = 한 데이터 소유권을 정하는 부분)\n\nA) 사장만 계정 가입, 알바는 초대코드/링크 — 사장이 휴대번호/이메일로 가입해 트럭 만들고, 알바는 초대코드(또는 PIN)로 간편 참여. 알바 자체 계정은 가볍게.\nB) 둘 다 정식 계정 — 알바도 각자 계정(휴대/이메일) 만들고 사장이 트럭에 초대. 누가 찍었는지 더 명확.\nC) 계정 없이 기기만 — 트럭 PIN/비밀번호 하나로 기기마다 열고, 주문 입력 시 누구인지만 선택. 가장 간단.\n\n어느 게 맞을까? (알바가 누구인지 주문에 기록하고 싶은지도 이 선택에 엮혀)",
+        "question_hash": "dbde6ae2593fb5ef435598ebe2a935b1",
+        "answer_hash": "af682ce5932b25e54a9ca8723dd1b039",
+        "selected_options": [
+          "A) 사장만 계정, 알바는 초대코드/PIN으로 간편 참여 (권장)"
+        ],
+        "component": "staff-auth",
+        "dimension": "constraints",
+        "ambiguity_at_ask": 0.191,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:00:35.642Z"
+      },
+      {
+        "round": 12,
+        "component": "staff-auth",
+        "dimension": "constraints",
+        "question": "계정/로그인·직원 초대 방식?",
+        "answer": "A) 사장만 정식 계정(휴대폰/이메일), 알바는 초대코드/PIN으로 간편 참여",
+        "status": "scored",
+        "ambiguity_before": 0.191,
+        "ambiguity_after": 0.15,
+        "scores": {
+          "goal": 0.85,
+          "constraints": 0.85,
+          "criteria": 0.85
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:13::q:discount",
+        "round": 13,
+        "question_id": "discount",
+        "question_text": "주문 받을 때 할인이나 '서비스'를 주는 경우도 있잖아. v1에서 어떻게 다룰까?\n\nA) 주문 금액 직접 조정 — 계산된 총액을 사장이 수동으로 낮출 수 있고(예: 9,000→8,000), 할인액만 메모. 단순.\nB) 할인 종류 구분 — % 할인/정액 할인/무료 서비스 구분해서 통계도 냄. 정교하지만 복잡.\nC) v1엔 할인 없음 — 정가로만 찍고 할인은 v2. 가장 단순.\n\n(무료 서비스는 매출 0이지만 원가는 나가니까 순이익에 영향 — 그것까지 따질지도 이 선택에 달렸어)",
+        "question_hash": "ac451e4bc6987c663363e864670d9f19",
+        "answer_hash": "443c8b6fcbbd4980daa8c68ec0c261d4",
+        "selected_options": [
+          "A) 주문 총액 수동 조정 + 할인액 메모 (권장, 단순+유연)"
+        ],
+        "component": "sales-profit-analytics",
+        "dimension": "criteria",
+        "ambiguity_at_ask": 0.15,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:02:45.448Z"
+      },
+      {
+        "round": 13,
+        "component": "sales-profit-analytics",
+        "dimension": "criteria",
+        "question": "할인/서비스 처리?",
+        "answer": "A) 주문 총액 수동 조정 + 할인액 메모",
+        "status": "scored",
+        "ambiguity_before": 0.15,
+        "ambiguity_after": 0.13,
+        "scores": {
+          "goal": 0.87,
+          "constraints": 0.86,
+          "criteria": 0.88
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:14::q:menu_structure",
+        "round": 14,
+        "question_id": "menu_structure",
+        "question_text": "메뉴를 어떻게 정리하고 싶어? POS 버튼 화면 배치랑 연결돼.\n\nA) 카테고리 있음 — '버거/음료/사이드' 같이 분류해서 POS에서 탭으로 찾기 쉬움. 메뉴 많은 집에 좋음.\nB) 카테고리 없이 평면 목록 — 메뉴가 몇 개 안 되니 그냥 나열. 가장 단순.\n\n그리고 메뉴에 품절/숨김 상태(오늘은 이거 안 팔아)가 필요한가?\n- 필요: 재료 떨어지면 POS에서 임시로 끌 수 있게\n- 불필요: 항상 전체 표시",
+        "question_hash": "fceb8bd0c32f9b2d621af56ca0367a7e",
+        "answer_hash": "6b0a8697d0e44a01c4347765f70c71ce",
+        "selected_options": [
+          "A + 품절 토글 있음 (카테고리 분류 + 메뉴별 판매중지)"
+        ],
+        "component": "menu-management",
+        "dimension": "goal",
+        "ambiguity_at_ask": 0.13,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:10:46.296Z"
+      },
+      {
+        "round": 14,
+        "component": "menu-management",
+        "dimension": "goal",
+        "question": "메뉴 카테고리/품절 토글?",
+        "answer": "A + 품절 토글 — 카테고리 분류 + 메뉴별 판매중지",
+        "status": "scored",
+        "ambiguity_before": 0.13,
+        "ambiguity_after": 0.092,
+        "scores": {
+          "goal": 0.92,
+          "constraints": 0.9,
+          "criteria": 0.9
+        }
+      },
+      {
+        "round_key": "ft-mvp-001::r:14::q:restate",
+        "round": 14,
+        "question_id": "restate",
+        "question_text": "한 줄 요약:\n\n\"푸드트럭 사장님이 메뉴(판매가·원가·원가율·카테고리·품절토글)를 관리하고, 장사 중 사장·알바가 여러 폰으로 동시·오프라인으로 메뉴버튼을 탭해 주문을 찍으면(취소·할인 포함, 주문은 불변 이벤트+당시 가격·원가 박제), 그 기록이 동기화돼 사장이 PC·폰에서 일/월/연별 매출과 순이익(=매출−재료원가)을 확인하는 모바일+웹 앱. (재고·위치·결제연동은 제외)\"\n\n이 한 줄이 네가 생각하는 그 결과와 같아?",
+        "question_hash": "b471ac37ccfe1a4ee56ad04e77540979",
+        "answer_hash": "e70b287e2996d15007b22d7be3c98e59",
+        "selected_options": [
+          "응, 맞아 — 크리스탈라이즈해"
+        ],
+        "component": "all",
+        "dimension": "restate",
+        "ambiguity_at_ask": 0.092,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:12:27.035Z"
+      },
+      {
+        "round_key": "ft-mvp-001::r:15::q:execution_bridge",
+        "round": 15,
+        "question_id": "execution_bridge",
+        "question_text": "명세가 준비됐어 (애매함 9.2%, pending approval). 어떻게 진행할까?",
+        "question_hash": "2f7b7b5053cd6b9602440e579836b221",
+        "answer_hash": "5bc3327dc7f6e8dae3bd4a43d01dd42e",
+        "selected_options": [
+          "명세를 더 다듬고 싶어 (인터뷰 계속)"
+        ],
+        "component": "all",
+        "dimension": "bridge",
+        "ambiguity_at_ask": 0.092,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:29:08.855Z"
+      },
+      {
+        "round_key": "ft-mvp-001::r:15::q:refine_area",
+        "round": 15,
+        "question_id": "refine_area",
+        "question_text": "어느 부분을 더 다듬고 싶어? 마음에 걸리는 게 있으면 그걸 파고들자.",
+        "question_hash": "7ad77b973edb04e4664fb0b36ed0ea28",
+        "answer_hash": "da35965f1864faed9299864288a243bf",
+        "selected_options": [
+          "화면·UX — 실제 화면 구성·흐름을 그려보고 싶어"
+        ],
+        "component": "all",
+        "dimension": "user-directed",
+        "ambiguity_at_ask": 0.092,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:30:00.683Z"
+      },
+      {
+        "round_key": "ft-mvp-001::r:15::q:owner_home",
+        "round": 15,
+        "question_id": "owner_home",
+        "question_text": "사장이 모바일 앱을 열었을 때 홈 화면을 어떻게 하면 좋을까? 내가 제안하는 구조는 이래:\n\n[사장 모바일 — 하단 탭 4개]\n1. 주문(POS): 장사 중 메인. 메뉴 버튼 그리드 + 장바구니 + [주문 완료]\n2. 매출: 오늘/이번달/올해 요약 카드 + 순이익, 주문 내역 리스트\n3. 메뉴 관리: 메뉴 추가/수정, 카테고리, 품절 토글\n4. 설정: 직원 관리(초대코드), 트럭 정보\n\n[알바 모바일] — 1번(주문) 화면만, 나머지 탭 숨김\n[사장 PC 웹] — 2번(매출·분석) 중심, 큰 화면 그래프\n\n이 4탭 구조가 맞을까?",
+        "question_hash": "06ba1fe70b8431b763990e4b771512ee",
+        "answer_hash": "4f9652144f105cc3c90f38a80e86bd91",
+        "selected_options": [
+          "맞아 — 주문/매출/메뉴/설정 4탭 구조로"
+        ],
+        "component": "all",
+        "dimension": "ux",
+        "ambiguity_at_ask": 0.092,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:31:11.284Z"
+      },
+      {
+        "round": 15,
+        "component": "all-ux",
+        "dimension": "ux",
+        "question": "사장 모바일 홈/탭 구조?",
+        "answer": "주문/매출/메뉴/설정 4탭. 알바는 주문 탭만, PC웹은 매출·분석 중심",
+        "status": "scored"
+      },
+      {
+        "round_key": "ft-mvp-001::r:16::q:sales_screen",
+        "round": 16,
+        "question_id": "sales_screen",
+        "question_text": "매출 탭을 열면 제일 먼저 뭐가 보여야 할까? 사장 입장에서 가장 궁금한 걸 위로.\n\n제안 구성(위→아래):\n1. 상단 큰 숫자: 오늘 매출 / 오늘 순이익 (기간 토글: 일/월/연)\n2. 그래프: 기간별 매출 추이 막대/선 그래프\n3. 메뉴별 판매 순위: 오늘(또는 기간) 잘 팔린 메뉴 TOP\n4. 주문 내역 리스트: 개별 주문(취소 포함) 내역\n\n이 순서·구성이 맞을까? 사장이 제일 중요하게 볼 게 위에 있어야 해.",
+        "question_hash": "f0831faa6d4906271cc18fc900987a99",
+        "answer_hash": "37bfea8b3d5f142f6f39a6b686a38edb",
+        "selected_options": [
+          "맞아 — 큰숫자(매출·순이익) → 추이 그래프 → 메뉴별 순위 → 주문내역"
+        ],
+        "component": "sales-profit-analytics",
+        "dimension": "ux",
+        "ambiguity_at_ask": 0.092,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:33:59.995Z"
+      },
+      {
+        "round": 16,
+        "component": "sales-profit-analytics",
+        "dimension": "ux",
+        "question": "매출 화면 구성?",
+        "answer": "큰숫자(매출·순이익)→추이 그래프→메뉴별 순위→주문내역 순",
+        "status": "scored"
+      },
+      {
+        "round_key": "ft-mvp-001::r:17::q:ux_continue",
+        "round": 17,
+        "question_id": "ux_continue",
+        "question_text": "화면·UX를 더 그릴까, 아니면 지금까지를 명세에 반영하고 마무리할까?",
+        "question_hash": "075a68b65e4f79ae4eca8de94cc3ef6d",
+        "answer_hash": "93e3d832212e32613564bbcc9c081b23",
+        "selected_options": [
+          "충분해 — 지금까지를 명세에 반영하고 ralplan으로 넘겨"
+        ],
+        "component": "all",
+        "dimension": "ux",
+        "ambiguity_at_ask": 0.092,
+        "lifecycle": "answered",
+        "answered_at": "2026-06-28T04:37:03.636Z"
+      }
+    ],
+    "established_facts": [
+      {
+        "fact": "매출 탭 레이아웃(위→아래): ①오늘 매출·순이익 큰 숫자(일/월/연 토글) ②기간별 매출 추이 그래프 ③메뉴별 판매 순위 TOP ④주문 내역 리스트(취소 포함)",
+        "source_round": 16,
+        "disputed": false
+      }
+    ],
+    "interview_id": "ft-mvp-001",
+    "type": "greenfield",
+    "initial_idea": "푸드트럭 사장님들이 메뉴와 매출을 관리하는 모바일/웹 앱. MVP: 메뉴 관리 + 매출 관리. 향후 확장(제외): 실시간 위치 안내, 결제 연동.",
+    "current_ambiguity": 0.092,
+    "language": {
+      "instruction": "Respond in Korean (한국어). Preserve Korean for all user-facing prose, questions, options, and reports."
+    },
+    "topology": {
+      "last_targeted_component_id": "menu-management"
+    },
+    "ontology_snapshots": [
+      {
+        "round": 14,
+        "entities": [
+          "트럭/사장계정(Truck)",
+          "직원(Staff: 사장/알바)",
+          "메뉴(Menu: 판매가·원가·원가율·카테고리·품절토글·선택레시피)",
+          "재료(Ingredient: 레시피 원가계산용)",
+          "주문(Order: 입력자·일시·총액·할인메모)",
+          "주문라인(OrderLine: 메뉴·수량·판매가/원가 박제)",
+          "취소이벤트(OrderVoid: 보상)",
+          "일집계(DailySummary: 매출·원가·순이익·지각반영표시)"
+        ],
+        "stability_ratio": 1,
+        "matching_reasoning": "Round 7 대비 엔티티 안정, 속성만 구체화. 신규 제거 없음"
+      }
+    ],
+    "auto_researched_rounds": [],
+    "auto_answered_rounds": [],
+    "lateral_reviews": [
+      {
+        "round": 9,
+        "transition": "progress->refined",
+        "personas": [
+          "contrarian",
+          "researcher"
+        ],
+        "status": "done",
+        "verdict": "NOT_READY",
+        "findings": {
+          "contrarian": "결정적 gap: 주문 취소/정정/환불(void) 의미론 + 알바 취소 권한. 레시피원가계산·동기화 build/buy는 비블로커",
+          "researcher": "결정적 gap: 확정 일매출 안정성(백데이트 동기화가 과거 숫자 변경) — 스냅샷lock vs 실시간재계산. 마감정산은 v1 불필요"
+        }
+      }
+    ],
+    "lateral_panel_failures": 0,
+    "auto_answer_streak": 0,
+    "refined_rounds": [],
+    "architect_failures": 0,
+    "closure_overrides": [
+      {
+        "round": 9,
+        "reason": "패널이 void 의미론+일매출 안정성 2개 결정적 gap 식별, 크리스탈라이즈 보류"
+      }
+    ],
+    "ambiguity_milestone": "refined",
+    "open_gaps": [],
+    "lateral_reviews_append": {
+      "round": 9,
+      "transition": "progress->refined",
+      "status": "convening"
+    },
+    "restated_goal": "푸드트럭 사장님이 메뉴(판매가·원가·원가율·카테고리·품절토글)를 관리하고, 장사 중 사장·알바가 여러 폰으로 동시·오프라인으로 메뉴버튼을 탭해 주문을 찍으면(취소·할인 포함, 주문은 불변 이벤트+당시 가격·원가 박제), 그 기록이 동기화돼 사장이 PC·폰에서 일/월/연별 매출과 순이익(=매출−재료원가)을 확인하는 모바일+웹 앱. 재고·위치·결제연동은 제외.",
+    "closure_passed": true,
+    "spec_status": "pending_approval_refining",
+    "ux_refinement": true
+  },
+  "handoff_to": "ralplan",
+  "handoff_at": "2026-06-28T04:40:16.320Z",
+  "state_revision": 47
+}

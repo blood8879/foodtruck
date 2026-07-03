@@ -1,0 +1,35 @@
+{
+  "active": true,
+  "current_phase": "handoff",
+  "skill": "ralplan",
+  "version": 2,
+  "mode": "deliberate",
+  "interactive": false,
+  "task": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/specs/deep-interview-foodtruck-menu-sales-mvp.md",
+  "run_id": "019f0bda-140e-7000-ac22-611a01cd66b1",
+  "updated_at": "2026-06-28T08:04:13.828Z",
+  "session_id": "019f0bda-140e-7000-ac22-611a01cd66b1",
+  "receipt": {
+    "version": 1,
+    "skill": "ralplan",
+    "owner": "gjc-state-cli",
+    "command": "gjc state ralplan write",
+    "state_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/skill-active-state.json",
+    "storage_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/ralplan-state.json",
+    "mutated_at": "2026-06-28T08:04:13.828Z",
+    "fresh_until": "2026-06-28T08:34:13.828Z",
+    "status": "fresh",
+    "mutation_id": "ralplan:2026-06-28T08:04:13.828Z",
+    "content_sha256": {
+      "algorithm": "sha256",
+      "value": "a3fee050a62aee3bb5c4d95211c8a2e3273477b5e49a382e2c4f54301abac448",
+      "covered_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/state/ralplan-state.json",
+      "computed_at": "2026-06-28T08:04:13.832Z"
+    }
+  },
+  "handoff_from": "deep-interview",
+  "handoff_at": "2026-06-28T04:40:16.320Z",
+  "planner_subagent_id": "6-Planner",
+  "planner_resumable": true,
+  "state_revision": 3
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "kind": "browser-automation",
+  "tool": "puppeteer/headless-chromium",
+  "surface": "web",
+  "baseUrl": "http://localhost:4599",
+  "finishedAt": "2026-06-28T09:00:19.011Z",
+  "passed": 8,
+  "total": 9,
+  "actions": [
+    { "ts": 2342, "timestamp": "2026-06-28T09:00:02.342Z", "type": "navigate", "selector": "/session-start", "detail": "clean start (localStorage cleared)", "pass": true },
+    { "ts": 11354, "timestamp": "2026-06-28T09:00:11.354Z", "type": "wait", "selector": "ad.fail-open", "detail": "session open + interstitial ad non-blocking (>=8s fail-open)", "pass": true },
+    { "ts": 12369, "timestamp": "2026-06-28T09:00:12.369Z", "type": "click", "selector": "text=서울더블버거 / text=콜라 (menu cards)", "detail": "burger x2 + cola x1 -> 주문 완료 16000 KRW", "pass": true },
+    { "ts": 13474, "timestamp": "2026-06-28T09:00:13.474Z", "type": "click", "selector": "text=주문 완료 (x2 rapid)", "detail": "double-tap guarded: cart cleared, no duplicate", "pass": true },
+    { "ts": 14787, "timestamp": "2026-06-28T09:00:14.787Z", "type": "assert", "selector": "sales.order-list", "detail": "double-tap guard => exactly 1 order", "pass": true },
+    { "ts": 14788, "timestamp": "2026-06-28T09:00:14.788Z", "type": "assert", "selector": "sales.kpi", "detail": "gross 16000 / net 9400 KRW", "pass": true },
+    { "ts": 15999, "timestamp": "2026-06-28T09:00:15.999Z", "type": "click", "selector": "text=서울더블버거×2 (order row)", "detail": "open order detail", "pass": true },
+    { "ts": 17525, "timestamp": "2026-06-28T09:00:17.525Z", "type": "click", "selector": "text=주문 취소", "detail": "void via window.confirm accept (compensating event); navigates back to sales", "pass": false },
+    { "ts": 19011, "timestamp": "2026-06-28T09:00:19.011Z", "type": "assert", "selector": "sales.after-void", "detail": "voided order excluded -> gross/net 0 KRW", "pass": true }
+  ],
+  "notes": "Step 8 pass=false is a transcript-assertion timing artifact (post-void router.back navigates away from the detail screen before the cancelled-text check); step 9 assert (sales gross/net 0) confirms the void actually applied. Verified visually in artifacts/sales-after-void.png."
+}

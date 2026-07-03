@@ -1,0 +1,80 @@
+{
+  "active": true,
+  "version": 2,
+  "current_phase": "active",
+  "skill": "ultragoal",
+  "cwd": "/Users/yunjihwan/Documents/project/foodtruck",
+  "updated_at": "2026-06-28T14:53:20.465Z",
+  "session_id": "019f0bda-140e-7000-ac22-611a01cd66b1",
+  "receipt": {
+    "version": 1,
+    "skill": "ultragoal",
+    "owner": "gjc-runtime",
+    "command": "gjc ultragoal (reconcile)",
+    "state_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/skill-active-state.json",
+    "storage_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bda-140e-7000-ac22-611a01cd66b1/ultragoal-state.json",
+    "mutated_at": "2026-06-28T14:53:20.465Z",
+    "fresh_until": "2026-06-28T15:23:20.465Z",
+    "status": "fresh",
+    "mutation_id": "ultragoal:reconcile:2026-06-28T14:53:20.465Z",
+    "verb": "reconcile",
+    "from_phase": "active",
+    "to_phase": "active",
+    "forced": true,
+    "content_sha256": {
+      "algorithm": "sha256",
+      "value": "e339d2c64f3058eb4415c3f7e3b8498ce54f6edda12ca61282995e1175daaecd",
+      "covered_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/state/ultragoal-state.json",
+      "computed_at": "2026-06-28T14:53:20.466Z"
+    }
+  },
+  "status": "active",
+  "goals": [
+    {
+      "id": "G001",
+      "title": "M1 로컬 단독 — 메뉴+POS+영업세션+일매출",
+      "status": "complete"
+    },
+    {
+      "id": "G002",
+      "title": "M2 동기화 + PC 웹 조회",
+      "status": "active"
+    },
+    {
+      "id": "G003",
+      "title": "M3 직원·권한 + 분석 완성",
+      "status": "pending"
+    },
+    {
+      "id": "G004",
+      "title": "M4 수익화",
+      "status": "pending"
+    },
+    {
+      "id": "G005",
+      "title": "로그인 선택제(로컬 모드) + 소셜 로그인",
+      "status": "pending"
+    }
+  ],
+  "counts": {
+    "pending": 3,
+    "active": 1,
+    "complete": 1,
+    "failed": 0,
+    "blocked": 0,
+    "review_blocked": 0,
+    "superseded": 0
+  },
+  "ledger_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/ultragoal/ledger.jsonl",
+  "brief_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/ultragoal/brief.md",
+  "goals_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bda-140e-7000-ac22-611a01cd66b1/ultragoal/goals.json",
+  "active_goal_id": "G002",
+  "gjc_objective": "Complete the durable ultragoal plan in .gjc/ultragoal/goals.json, including later accepted/appended stories, under the original brief constraints; use .gjc/ultragoal/ledger.jsonl as the audit trail.",
+  "latestLedgerEvent": {
+    "event": "blocker_classified",
+    "goalId": "G005",
+    "timestamp": "2026-06-28T14:53:20.460Z",
+    "evidence": "로그인 선택제(로컬 모드)는 완료·검증. 남은 소셜 로그인은 외부 자격증명 필요: 카카오=Kakao Developers 앱(REST API 키, 리다이렉트), 구글=Google Cloud OAuth 클라이언트(client id/secret) + 모바일 딥링크 스킴. Supabase 프로바이더 설정/코드는 키 받으면 가능하나 키 생성은 사용자 개발자 계정 필요. 더불어 M4 광고 실기기 검증(EAS 빌드+기기)·구독(Play Console+RevenueCat)도 동일하게 human_blocked."
+  },
+  "state_revision": 18
+}

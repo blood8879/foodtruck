@@ -1,0 +1,15 @@
+# M1 verification report (#오후)
+
+## bun test (domain core + sqlite store)
+bun test v1.3.14 (0d9b296a)
+
+ 22 pass
+ 0 fail
+ 71 expect() calls
+Ran 22 tests across 2 files. [31.00ms]
+
+## tsc --noEmit
+tsc exit: 0
+
+## web export
+dist/ present (15 routes exported)

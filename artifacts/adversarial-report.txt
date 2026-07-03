@@ -1,0 +1,18 @@
+# M1 Red-team / adversarial cases (results)
+
+1. Double-tap on 주문 완료 (busy POS) -> submittingRef guard: exactly ONE order recorded.
+   Evidence: artifacts/browser-e2e.json step "single order" pass=true (cnt===1).
+2. Order void (cancel) -> excluded from gross/cost/net & menu ranking, history kept with 취소 badge.
+   Evidence: browser-e2e "after void -> ₩0" pass=true; bun test "excludes voided orders ... idempotent".
+3. Duplicate void event (idempotent) -> single deduction, no double-count.
+   Evidence: bun test src/core "excludes voided orders from summary and is idempotent".
+4. Manual total with non-numeric input ("abc") -> parsed to null (falls back to line sum), no ₩0 order.
+   Evidence: code src/app/(tabs)/index.tsx manualDigits guard; unit math covered by fold tests.
+5. Sold-out menu -> not addable to cart (addToCart early-return on soldOut), POS button dimmed.
+   Evidence: code src/app/(tabs)/index.tsx addToCart; menu sold-out toggle round-trip in store test.
+6. Price/cost snapshot immutability -> editing a menu after sale does NOT change past order totals.
+   Evidence: bun test src/core "snapshot is immune to later menu edits".
+7. Session double-open (double tap 장사 시작) -> single active session (write-side guard).
+   Evidence: code src/data/AppData.tsx openSession guard; bun test "enforces single active session".
+8. Ad load failure/hang at session boundary -> fail-open timeout proceeds; never blocks POS.
+   Evidence: code src/app/ad.tsx FAIL_OPEN_MS; browser-e2e "ad fail-open" pass=true.

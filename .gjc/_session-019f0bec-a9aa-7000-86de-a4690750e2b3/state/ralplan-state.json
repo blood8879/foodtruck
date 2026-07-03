@@ -1,0 +1,26 @@
+{
+  "run_id": "019f0bec-a9aa-7000-86de-a4690750e2b3",
+  "skill": "ralplan",
+  "active": true,
+  "current_phase": "architect",
+  "version": 2,
+  "updated_at": "2026-06-28T01:52:28.282Z",
+  "receipt": {
+    "version": 1,
+    "skill": "ralplan",
+    "owner": "gjc-runtime",
+    "command": "gjc ralplan persist-run-id",
+    "state_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bec-a9aa-7000-86de-a4690750e2b3/skill-active-state.json",
+    "storage_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/state/sessions/019f0bec-a9aa-7000-86de-a4690750e2b3/ralplan-state.json",
+    "mutated_at": "2026-06-28T01:52:28.282Z",
+    "fresh_until": "2026-06-28T02:22:28.282Z",
+    "status": "fresh",
+    "mutation_id": "ralplan:2026-06-28T01:52:28.282Z",
+    "content_sha256": {
+      "algorithm": "sha256",
+      "value": "ba17de7e65e055afa166f7aad227d392c72e64d292f8e9682319e9ecdc349e3a",
+      "covered_path": "/Users/yunjihwan/Documents/project/foodtruck/.gjc/_session-019f0bec-a9aa-7000-86de-a4690750e2b3/state/ralplan-state.json",
+      "computed_at": "2026-06-28T01:52:28.282Z"
+    }
+  }
+}
