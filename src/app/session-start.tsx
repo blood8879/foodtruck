@@ -53,7 +53,7 @@ export default function SessionStartScreen() {
   });
 
   async function startBusiness() {
-    openSession(ownerId, locationTag.trim() || undefined);
+    openSession(ownerId, { locationTag: locationTag.trim() || undefined });
     // Fire-and-forget: don't delay the screen transition on notification setup.
     void scheduleCloseReminder();
     const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());

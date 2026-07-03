@@ -9,8 +9,12 @@ import type {
   OrderPlacedEvent,
   OrderVoidedEvent,
   PaymentMethod,
+  PlanAddedEvent,
+  PlanRemovedEvent,
   SessionClosedEvent,
   SessionOpenedEvent,
+  SoldOutMarkedEvent,
+  WeatherStamp,
 } from "./types";
 import { effectiveCost } from "./cost";
 
@@ -64,14 +68,16 @@ export function makeOrderVoided(targetOrderId: Id, voidedBy: Id, now?: number): 
   };
 }
 
-export function makeSessionOpened(
-  openedBy: Id,
-  now?: number,
-  locationTag?: string,
-): SessionOpenedEvent {
-  const ts = now ?? Date.now();
+export interface OpenSessionOpts {
+  now?: number;
+  locationTag?: string;
+  weather?: WeatherStamp;
+}
+
+export function makeSessionOpened(openedBy: Id, opts?: OpenSessionOpts): SessionOpenedEvent {
+  const ts = opts?.now ?? Date.now();
   const sessionId = uuidv7(ts);
-  const tag = locationTag?.trim();
+  const tag = opts?.locationTag?.trim();
   return {
     type: "SessionOpened",
     eventId: sessionId,
@@ -79,6 +85,7 @@ export function makeSessionOpened(
     sessionId,
     openedBy,
     ...(tag ? { locationTag: tag } : {}),
+    ...(opts?.weather ? { weather: opts.weather } : {}),
   };
 }
 
@@ -118,4 +125,53 @@ export function makeExpenseVoided(
 ): ExpenseVoidedEvent {
   const ts = now ?? Date.now();
   return { type: "ExpenseVoided", eventId: uuidv7(ts), ts, targetExpenseId, voidedBy };
+}
+
+export interface AddPlanInput {
+  date: string; // "YYYY-MM-DD"
+  locationTag?: string;
+  memo?: string;
+  enteredBy: Id;
+  now?: number;
+}
+
+export function makePlanAdded(input: AddPlanInput): PlanAddedEvent {
+  const ts = input.now ?? Date.now();
+  const tag = input.locationTag?.trim();
+  const memo = input.memo?.trim();
+  return {
+    type: "PlanAdded",
+    eventId: uuidv7(ts),
+    ts,
+    date: input.date,
+    ...(tag ? { locationTag: tag } : {}),
+    ...(memo ? { memo } : {}),
+    enteredBy: input.enteredBy,
+  };
+}
+
+export function makePlanRemoved(targetPlanId: Id, removedBy: Id, now?: number): PlanRemovedEvent {
+  const ts = now ?? Date.now();
+  return { type: "PlanRemoved", eventId: uuidv7(ts), ts, targetPlanId, removedBy };
+}
+
+export interface MarkSoldOutInput {
+  menuId: Id;
+  menuName: string;
+  sessionId: Id | null;
+  markedBy: Id;
+  now?: number;
+}
+
+export function makeSoldOutMarked(input: MarkSoldOutInput): SoldOutMarkedEvent {
+  const ts = input.now ?? Date.now();
+  return {
+    type: "SoldOutMarked",
+    eventId: uuidv7(ts),
+    ts,
+    menuId: input.menuId,
+    menuName: input.menuName,
+    sessionId: input.sessionId,
+    markedBy: input.markedBy,
+  };
 }

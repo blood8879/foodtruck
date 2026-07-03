@@ -97,7 +97,7 @@ describe("Repository event store", () => {
   });
 
   it("appends events append-only, idempotently, and folds read models", () => {
-    const open = makeSessionOpened("owner", 1000);
+    const open = makeSessionOpened("owner", { now: 1000 });
     repo.appendEvent(open);
     repo.appendEvent(open); // duplicate ignored
     const order = makeOrderPlaced({
@@ -128,7 +128,7 @@ describe("Repository event store", () => {
   });
 
   it("tracks outbox pending count and clears active session on close", () => {
-    const open = makeSessionOpened("owner", 1000);
+    const open = makeSessionOpened("owner", { now: 1000 });
     repo.appendEvent(open);
     expect(repo.pendingSyncCount()).toBe(1);
     repo.appendEvent(makeSessionClosed(open.sessionId, "owner", 5000));
@@ -137,7 +137,7 @@ describe("Repository event store", () => {
   });
 
   it("does not allow event mutation (append-only insert-or-ignore)", () => {
-    const open = makeSessionOpened("owner", 1000);
+    const open = makeSessionOpened("owner", { now: 1000 });
     repo.appendEvent(open);
     // re-appending same id must not change ts/payload
     const tampered = { ...open, ts: 9999 };
@@ -155,7 +155,7 @@ describe("Repository sync state (M2)", () => {
   });
 
   it("tracks outbox, marks synced, applies remote, and persists cursor", () => {
-    const open = makeSessionOpened("owner", 1000);
+    const open = makeSessionOpened("owner", { now: 1000 });
     repo.appendEvent(open);
     expect(repo.unsyncedEvents().map((e) => e.eventId)).toEqual([open.eventId]);
 

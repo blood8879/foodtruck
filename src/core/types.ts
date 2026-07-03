@@ -31,6 +31,23 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   other: "기타",
 };
 
+/** Coarse weather bucket stamped on a session at open time (Phase 2). */
+export type WeatherCondition = "clear" | "clouds" | "rain" | "snow";
+
+/** Korean labels for weather conditions (맑음/흐림/비/눈). */
+export const WEATHER_CONDITION_LABELS: Record<WeatherCondition, string> = {
+  clear: "맑음",
+  clouds: "흐림",
+  rain: "비",
+  snow: "눈",
+};
+
+/** Weather snapshot recorded when a session opens. Temperature in Celsius. */
+export interface WeatherStamp {
+  tempC: number;
+  condition: WeatherCondition;
+}
+
 export interface RecipeItem {
   id: Id;
   name: string;
@@ -92,6 +109,8 @@ export interface SessionOpenedEvent {
   openedBy: Id; // staff id
   /** Optional business location / event tag (장소·행사). Absent on pre-feature events. */
   locationTag?: string;
+  /** Optional weather snapshot at open time (Phase 2). Absent on pre-feature events. */
+  weather?: WeatherStamp;
 }
 
 export interface SessionClosedEvent {
@@ -143,13 +162,53 @@ export interface ExpenseVoidedEvent {
   voidedBy: Id;
 }
 
+/**
+ * A planned business day (영업 일정). `date` is a local calendar day
+ * "YYYY-MM-DD"; `eventId` doubles as the plan id.
+ */
+export interface PlanAddedEvent {
+  type: "PlanAdded";
+  eventId: Id; // also the plan id
+  ts: Millis;
+  date: string; // "YYYY-MM-DD"
+  locationTag?: string;
+  memo?: string;
+  enteredBy: Id;
+}
+
+export interface PlanRemovedEvent {
+  type: "PlanRemoved";
+  eventId: Id;
+  ts: Millis;
+  targetPlanId: Id;
+  removedBy: Id;
+}
+
+/**
+ * Records the moment a menu was flipped to sold-out (품절 시각). The soldOut
+ * flag itself lives on the menu master (LWW); this event is an append-only
+ * audit trail of off→on transitions for later insight. `menuName` is a snapshot.
+ */
+export interface SoldOutMarkedEvent {
+  type: "SoldOutMarked";
+  eventId: Id;
+  ts: Millis;
+  menuId: Id;
+  menuName: string; // snapshot of the menu name at mark time
+  sessionId: Id | null; // active session when marked, else null
+  markedBy: Id;
+}
+
 export type DomainEvent =
   | SessionOpenedEvent
   | SessionClosedEvent
   | OrderPlacedEvent
   | OrderVoidedEvent
   | ExpenseAddedEvent
-  | ExpenseVoidedEvent;
+  | ExpenseVoidedEvent
+  | PlanAddedEvent
+  | PlanRemovedEvent
+  | SoldOutMarkedEvent;
 
 export type DomainEventType = DomainEvent["type"];
 
@@ -194,6 +253,16 @@ export interface SessionView {
   openedBy: Id;
   /** Location / event tag stamped at open time, if any. */
   locationTag?: string;
+  /** Weather snapshot stamped at open time, if any. */
+  weather?: WeatherStamp;
+}
+
+export interface PlanView {
+  planId: Id;
+  date: string; // "YYYY-MM-DD"
+  locationTag?: string;
+  memo?: string;
+  removed: boolean;
 }
 
 export interface ExpenseView {

@@ -27,7 +27,7 @@ describe("sync engine", () => {
     const a = device(server, "owner", "owner");
     const b = device(server, "owner", "owner"); // same owner, second device
 
-    const open = makeSessionOpened("owner", 1000);
+    const open = makeSessionOpened("owner", { now: 1000 });
     const o1 = makeOrderPlaced({ sessionId: open.sessionId, enteredBy: "owner", lines: [lineFromMenu(burger, 1)], now: 2000 });
     const o2 = makeOrderPlaced({ sessionId: open.sessionId, enteredBy: "owner", lines: [lineFromMenu(burger, 2)], now: 3000 });
 
@@ -85,7 +85,7 @@ describe("sync engine", () => {
     const owner = device(server, "owner", "owner");
     const staff = device(server, "staff", "staff");
 
-    const open = makeSessionOpened("owner", 1000);
+    const open = makeSessionOpened("owner", { now: 1000 });
     const ownerOrder = makeOrderPlaced({ sessionId: open.sessionId, enteredBy: "owner", lines: [lineFromMenu(burger, 5)], now: 2000 });
     owner.local.authorLocal(open, "owner");
     owner.local.authorLocal(ownerOrder, "owner");

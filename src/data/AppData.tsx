@@ -23,6 +23,7 @@ import {
   filterByDateKey,
   foldExpenses,
   foldOrders,
+  foldPlans,
   getActiveSession,
   inviteCode,
   lineFromMenu,
@@ -30,8 +31,11 @@ import {
   makeExpenseVoided,
   makeOrderPlaced,
   makeOrderVoided,
+  makePlanAdded,
+  makePlanRemoved,
   makeSessionClosed,
   makeSessionOpened,
+  makeSoldOutMarked,
   summarize,
 } from "../core";
 import type {
@@ -43,10 +47,12 @@ import type {
   OrderView,
   PaymentMethod,
   PlanTier,
+  PlanView,
   SalesSummary,
   SessionView,
   Staff,
   Truck,
+  WeatherStamp,
 } from "../core/types";
 
 export interface PlaceOrderArgs {
@@ -64,6 +70,17 @@ export interface AddExpenseArgs {
   enteredBy: string;
 }
 
+export interface OpenSessionArgs {
+  locationTag?: string;
+  weather?: WeatherStamp;
+}
+
+export interface AddPlanArgs {
+  date: string; // "YYYY-MM-DD"
+  locationTag?: string;
+  memo?: string;
+}
+
 interface AppDataValue {
   loading: boolean;
   truck: Truck | null;
@@ -76,6 +93,7 @@ interface AppDataValue {
   ordersToday: OrderView[];
   summaryToday: SalesSummary;
   expensesToday: ExpenseView[];
+  plans: PlanView[];
   pendingSync: number;
   syncEnabled: boolean;
   // mutations
@@ -83,8 +101,10 @@ interface AppDataValue {
   deleteMenu: (id: string) => void;
   loadSampleMenus: () => void;
   toggleSoldOut: (id: string, soldOut: boolean) => void;
-  openSession: (by: string, locationTag?: string) => void;
+  openSession: (by: string, opts?: OpenSessionArgs) => void;
   closeSession: (by: string) => void;
+  addPlan: (args: AddPlanArgs) => void;
+  removePlan: (planId: string) => void;
   placeOrder: (args: PlaceOrderArgs) => void;
   voidOrder: (orderId: string, by: string) => void;
   addExpense: (args: AddExpenseArgs) => void;
@@ -229,6 +249,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     for (const m of menus) set.add(m.category);
     return [...set];
   }, [menus]);
+  const plans = useMemo(() => foldPlans(events), [events]);
 
   const value: AppDataValue = {
     loading,
@@ -241,6 +262,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     ordersToday,
     summaryToday,
     expensesToday,
+    plans,
     pendingSync,
     syncEnabled,
     ownerId,
@@ -253,21 +275,42 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       refresh();
     },
     toggleSoldOut: (id, soldOut) => {
+      // Capture the pre-toggle state so we can detect an off→on transition.
+      const prev = menus.find((m) => m.id === id);
       repo.setSoldOut(id, soldOut);
-      refresh();
+      // Stamp the moment a menu goes sold-out (품절 시각) as an append-only audit
+      // trail — only on the false→true edge, not on every toggle. The soldOut
+      // flag itself stays LWW on the menu master (handled by repo.setSoldOut).
+      if (soldOut && prev && !prev.soldOut) {
+        append(
+          makeSoldOutMarked({
+            menuId: id,
+            menuName: prev.name,
+            sessionId: activeSession?.sessionId ?? null,
+            markedBy: ownerId,
+          }),
+        );
+      } else {
+        refresh();
+      }
     },
     loadSampleMenus: () => {
       seedDemoMenus(repo);
       refresh();
     },
-    openSession: (by, locationTag) => {
+    openSession: (by, opts) => {
       // Single-active-session invariant (write-side guard): ignore double-open.
       if (activeSession) return;
-      append(makeSessionOpened(by, undefined, locationTag));
+      append(
+        makeSessionOpened(by, { locationTag: opts?.locationTag, weather: opts?.weather }),
+      );
     },
     closeSession: (by) => {
       if (activeSession) append(makeSessionClosed(activeSession.sessionId, by));
     },
+    addPlan: ({ date, locationTag, memo }) =>
+      append(makePlanAdded({ date, locationTag, memo, enteredBy: ownerId })),
+    removePlan: (planId) => append(makePlanRemoved(planId, ownerId)),
     placeOrder: ({ lines, discountMemo, manualTotal, paymentMethod, enteredBy }) =>
       append(
         makeOrderPlaced({

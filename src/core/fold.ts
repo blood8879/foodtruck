@@ -6,8 +6,10 @@ import type {
   OrderPlacedEvent,
   OrderView,
   PaymentMethod,
+  PlanView,
   SalesSummary,
   SessionView,
+  SoldOutMarkedEvent,
 } from "./types";
 
 /** gross for an order: manualTotal override wins, else Σ(unitPrice × qty). */
@@ -218,6 +220,7 @@ export function foldSessions(events: DomainEvent[]): SessionView[] {
           closedAt: null,
           openedBy: e.openedBy,
           ...(e.locationTag ? { locationTag: e.locationTag } : {}),
+          ...(e.weather ? { weather: e.weather } : {}),
         });
       }
     } else if (e.type === "SessionClosed") {
@@ -238,4 +241,49 @@ export function getActiveSession(events: DomainEvent[]): SessionView | null {
   if (open.length === 0) return null;
   open.sort((a, b) => a.openedAt - b.openedAt || (a.sessionId < b.sessionId ? -1 : 1));
   return open[0];
+}
+
+/**
+ * Fold the event log into planned-day read models (영업 일정).
+ * Idempotent: duplicate PlanRemoved / PlanAdded (same eventId) collapse — the
+ * same pattern used by foldExpenses. Sorted by date, then insertion ts.
+ */
+export function foldPlans(events: DomainEvent[]): PlanView[] {
+  const removed = new Set<Id>();
+  for (const e of events) {
+    if (e.type === "PlanRemoved") removed.add(e.targetPlanId);
+  }
+
+  const seen = new Set<Id>();
+  const out: (PlanView & { ts: Millis })[] = [];
+  for (const e of events) {
+    if (e.type !== "PlanAdded") continue;
+    if (seen.has(e.eventId)) continue; // idempotent
+    seen.add(e.eventId);
+    out.push({
+      planId: e.eventId,
+      date: e.date,
+      locationTag: e.locationTag,
+      memo: e.memo,
+      removed: removed.has(e.eventId),
+      ts: e.ts,
+    });
+  }
+  out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : a.ts - b.ts));
+  return out.map(({ ts: _ts, ...view }) => view);
+}
+
+/** Plans that have not been removed. */
+export function activePlans(plans: PlanView[]): PlanView[] {
+  return plans.filter((p) => !p.removed);
+}
+
+/** Extract all sold-out mark events (품절 시각), sorted by ts. */
+export function foldSoldOutMarks(events: DomainEvent[]): SoldOutMarkedEvent[] {
+  const out: SoldOutMarkedEvent[] = [];
+  for (const e of events) {
+    if (e.type === "SoldOutMarked") out.push(e);
+  }
+  out.sort((a, b) => a.ts - b.ts);
+  return out;
 }

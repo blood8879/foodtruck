@@ -17,6 +17,12 @@ function authorMeta(e: DomainEvent): { enteredBy: Id; deviceCreatedAt: number } 
       return { enteredBy: e.enteredBy, deviceCreatedAt: e.ts };
     case "ExpenseVoided":
       return { enteredBy: e.voidedBy, deviceCreatedAt: e.ts };
+    case "PlanAdded":
+      return { enteredBy: e.enteredBy, deviceCreatedAt: e.ts };
+    case "PlanRemoved":
+      return { enteredBy: e.removedBy, deviceCreatedAt: e.ts };
+    case "SoldOutMarked":
+      return { enteredBy: e.markedBy, deviceCreatedAt: e.ts };
   }
 }
 

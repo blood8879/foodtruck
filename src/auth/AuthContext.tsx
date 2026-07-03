@@ -6,8 +6,32 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { Alert } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { getSupabase } from "../sync/supabaseClient";
 import { isSyncConfigured } from "../sync/config";
+
+// Finalizes an auth session that completed via a web popup redirect (web only;
+// a no-op on native). Safe to call once at module load per Expo's guidance.
+WebBrowser.maybeCompleteAuthSession();
+
+/** Collect params from both the query string and the URL fragment of a deep link. */
+function paramsFromUrl(url: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const grab = (segment: string | undefined) => {
+    if (!segment) return;
+    for (const pair of segment.split("&")) {
+      if (!pair) continue;
+      const [k, v] = pair.split("=");
+      if (k) out[decodeURIComponent(k)] = decodeURIComponent(v ?? "");
+    }
+  };
+  const [beforeHash, hash] = url.split("#");
+  grab(beforeHash.split("?")[1]);
+  grab(hash);
+  return out;
+}
 
 export type Role = "owner" | "staff";
 
@@ -26,6 +50,8 @@ interface AuthValue {
   error: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
+  /** OAuth login via Kakao (Supabase web flow, no native SDK). */
+  signInWithKakao: () => Promise<void>;
   signOut: () => Promise<void>;
   /** Create a new truck and become its owner. */
   createTruck: (truckName: string, ownerName: string) => Promise<void>;
@@ -140,6 +166,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (e) setError(e.message);
   }, []);
 
+  const signInWithKakao = useCallback(async () => {
+    setError(null);
+    const sb = getSupabase();
+    if (!sb) return;
+    // Deep link back into the app (uses app.json `scheme`); dev builds get the
+    // Expo host URL automatically via Linking.createURL.
+    const redirectTo = Linking.createURL("auth/callback");
+    const { data, error: e } = await sb.auth.signInWithOAuth({
+      provider: "kakao",
+      options: { redirectTo, skipBrowserRedirect: true },
+    });
+    if (e || !data?.url) {
+      if (e) Alert.alert("카카오 로그인", e.message);
+      return;
+    }
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    // User dismissed / cancelled the browser -> return silently.
+    if (result.type !== "success" || !result.url) return;
+
+    const p = paramsFromUrl(result.url);
+    if (p.error || p.error_description) {
+      Alert.alert("카카오 로그인", p.error_description || p.error);
+      return;
+    }
+    // The client uses the implicit flow (no `flowType: 'pkce'`), so tokens come
+    // back in the URL fragment. Establish the session; onAuthStateChange then
+    // runs the same membership/onboarding flow as email login.
+    if (p.access_token && p.refresh_token) {
+      const { error: sErr } = await sb.auth.setSession({
+        access_token: p.access_token,
+        refresh_token: p.refresh_token,
+      });
+      if (sErr) Alert.alert("카카오 로그인", sErr.message);
+      return;
+    }
+    Alert.alert("카카오 로그인", "로그인 정보를 받지 못했습니다. 다시 시도해주세요.");
+  }, []);
+
   const signOut = useCallback(async () => {
     const sb = getSupabase();
     if (!sb) return;
@@ -209,6 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     signIn,
     signUp,
+    signInWithKakao,
     signOut,
     createTruck,
     joinTruck,

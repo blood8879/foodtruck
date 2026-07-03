@@ -1,13 +1,13 @@
 import { router } from "expo-router";
 import { useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../auth/AuthContext";
 import { AppButton, Card, Icon } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
 
 export default function SignInScreen() {
-  const { signIn, signUp, error, loading } = useAuth();
+  const { signIn, signUp, signInWithKakao, configured, error, loading } = useAuth();
   const [mode, setMode] = useState<"in" | "up">("in");
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
@@ -19,6 +19,12 @@ export default function SignInScreen() {
     setBusy(true);
     if (mode === "in") await signIn(email.trim(), pw);
     else await signUp(email.trim(), pw);
+    setBusy(false);
+  }
+
+  async function kakao() {
+    setBusy(true);
+    await signInWithKakao();
     setBusy(false);
   }
 
@@ -34,6 +40,26 @@ export default function SignInScreen() {
             {mode === "in" ? "사장님 계정으로 로그인" : "사장님 계정 만들기"}
           </Text>
         </View>
+
+        {configured ? (
+          <View style={styles.kakaoWrap}>
+            <TouchableOpacity
+              style={styles.kakaoButton}
+              activeOpacity={0.85}
+              disabled={busy}
+              onPress={kakao}
+              accessibilityRole="button"
+              accessibilityLabel="카카오로 시작하기"
+            >
+              <Text style={styles.kakaoText}>카카오로 시작하기</Text>
+            </TouchableOpacity>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>또는</Text>
+              <View style={styles.dividerLine} />
+            </View>
+          </View>
+        ) : null}
 
         <Card style={styles.form}>
           <Text style={styles.label}>이메일</Text>
@@ -92,6 +118,18 @@ const styles = StyleSheet.create({
   icon: { width: 72, height: 72, borderRadius: 22, backgroundColor: colors.accentSoft, alignItems: "center", justifyContent: "center" },
   title: { fontSize: 22, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.5 },
   subtitle: { fontSize: fontSize.body, color: colors.ink2 },
+  kakaoWrap: { gap: spacing.lg },
+  kakaoButton: {
+    backgroundColor: "#FEE500",
+    borderRadius: radii.input,
+    paddingVertical: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  kakaoText: { color: "#191919", fontSize: fontSize.body, fontWeight: fontWeight.bold },
+  divider: { flexDirection: "row", alignItems: "center", gap: spacing.sm },
+  dividerLine: { flex: 1, height: 1, backgroundColor: colors.line },
+  dividerText: { fontSize: fontSize.bodySm, color: colors.muted },
   form: { gap: spacing.sm },
   label: { fontSize: fontSize.label, fontWeight: fontWeight.bold, color: colors.muted },
   input: {

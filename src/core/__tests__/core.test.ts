@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import {
+  activePlans,
   canUse,
   costRatio,
   costRatioIsHealthy,
@@ -8,7 +9,9 @@ import {
   filterByDateKey,
   foldExpenses,
   foldOrders,
+  foldPlans,
   foldSessions,
+  foldSoldOutMarks,
   formatWon,
   getActiveSession,
   inviteCode,
@@ -17,8 +20,11 @@ import {
   makeExpenseVoided,
   makeOrderPlaced,
   makeOrderVoided,
+  makePlanAdded,
+  makePlanRemoved,
   makeSessionClosed,
   makeSessionOpened,
+  makeSoldOutMarked,
   margin,
   sumExpenses,
   recipeCost,
@@ -27,7 +33,7 @@ import {
   summarizeByPayment,
   uuidv7,
 } from "../index";
-import type { DomainEvent, Menu } from "../types";
+import type { DomainEvent, Menu, WeatherStamp } from "../types";
 
 const burger: Menu = {
   id: "m-burger",
@@ -76,7 +82,7 @@ describe("money", () => {
 });
 
 describe("fold orders", () => {
-  const oOpen = makeSessionOpened("owner", 1_000);
+  const oOpen = makeSessionOpened("owner", { now: 1_000 });
   const o1 = makeOrderPlaced({
     sessionId: oOpen.sessionId,
     enteredBy: "owner",
@@ -143,7 +149,7 @@ describe("fold orders", () => {
 });
 
 describe("payment method", () => {
-  const oOpen = makeSessionOpened("owner", 1_000);
+  const oOpen = makeSessionOpened("owner", { now: 1_000 });
   const cardOrder = makeOrderPlaced({
     sessionId: oOpen.sessionId,
     enteredBy: "owner",
@@ -187,7 +193,7 @@ describe("payment method", () => {
 
 describe("sessions", () => {
   it("tracks one active session and closes it", () => {
-    const open = makeSessionOpened("owner", 1_000);
+    const open = makeSessionOpened("owner", { now: 1_000 });
     expect(getActiveSession([open])?.sessionId).toBe(open.sessionId);
     const close = makeSessionClosed(open.sessionId, "owner", 5_000);
     expect(getActiveSession([open, close])).toBeNull();
@@ -197,8 +203,8 @@ describe("sessions", () => {
   });
 
   it("enforces single active session deterministically", () => {
-    const a = makeSessionOpened("owner", 1_000);
-    const b = makeSessionOpened("staff", 2_000);
+    const a = makeSessionOpened("owner", { now: 1_000 });
+    const b = makeSessionOpened("staff", { now: 2_000 });
     // earliest-opened wins as the canonical active session
     expect(getActiveSession([b, a])?.sessionId).toBe(a.sessionId);
   });
@@ -253,23 +259,130 @@ describe("expenses", () => {
 
 describe("session location tag", () => {
   it("stamps locationTag onto the session view when provided", () => {
-    const open = makeSessionOpened("owner", 1_000, "여의도 벚꽃축제");
+    const open = makeSessionOpened("owner", { now: 1_000, locationTag: "여의도 벚꽃축제" });
     expect(open.locationTag).toBe("여의도 벚꽃축제");
     const [view] = foldSessions([open]);
     expect(view.locationTag).toBe("여의도 벚꽃축제");
   });
 
   it("trims whitespace and omits an empty/absent tag (backward compat)", () => {
-    const trimmed = makeSessionOpened("owner", 1_000, "  강남역  ");
+    const trimmed = makeSessionOpened("owner", { now: 1_000, locationTag: "  강남역  " });
     expect(trimmed.locationTag).toBe("강남역");
 
-    const blank = makeSessionOpened("owner", 2_000, "   ");
+    const blank = makeSessionOpened("owner", { now: 2_000, locationTag: "   " });
     expect(blank.locationTag).toBeUndefined();
 
-    const legacy = makeSessionOpened("owner", 3_000);
+    const legacy = makeSessionOpened("owner", { now: 3_000 });
     expect(legacy.locationTag).toBeUndefined();
     const [view] = foldSessions([legacy]);
     expect(view.locationTag).toBeUndefined();
+  });
+});
+
+describe("session weather stamp", () => {
+  const weather: WeatherStamp = { tempC: 24.5, condition: "clear" };
+
+  it("stamps weather onto the event and session view when provided", () => {
+    const open = makeSessionOpened("owner", { now: 1_000, weather });
+    expect(open.weather).toEqual(weather);
+    const [view] = foldSessions([open]);
+    expect(view.weather).toEqual(weather);
+  });
+
+  it("combines locationTag and weather in the options object", () => {
+    const open = makeSessionOpened("owner", {
+      now: 1_000,
+      locationTag: "여의도",
+      weather,
+    });
+    expect(open.locationTag).toBe("여의도");
+    expect(open.weather).toEqual(weather);
+  });
+
+  it("omits weather when absent (backward compat)", () => {
+    const legacy = makeSessionOpened("owner", { now: 1_000 });
+    expect(legacy.weather).toBeUndefined();
+    const bare = makeSessionOpened("owner");
+    expect(bare.weather).toBeUndefined();
+    const [view] = foldSessions([legacy]);
+    expect(view.weather).toBeUndefined();
+  });
+});
+
+describe("plans", () => {
+  const p1 = makePlanAdded({
+    date: "2026-07-10",
+    locationTag: "여의도 벚꽃축제",
+    memo: "오후 2시부터",
+    enteredBy: "owner",
+    now: 2_000,
+  });
+  const p2 = makePlanAdded({
+    date: "2026-07-05",
+    enteredBy: "owner",
+    now: 1_000,
+  });
+
+  it("folds plans sorted by date then insertion ts", () => {
+    const plans = foldPlans([p1, p2]);
+    expect(plans).toHaveLength(2);
+    // p2 (2026-07-05) before p1 (2026-07-10) despite later append order
+    expect(plans[0].planId).toBe(p2.eventId);
+    expect(plans[0].date).toBe("2026-07-05");
+    expect(plans[0].locationTag).toBeUndefined();
+    expect(plans[0].memo).toBeUndefined();
+    expect(plans[1].planId).toBe(p1.eventId);
+    expect(plans[1].locationTag).toBe("여의도 벚꽃축제");
+    expect(plans[1].memo).toBe("오후 2시부터");
+    expect(plans[1].removed).toBe(false);
+  });
+
+  it("marks removed plans, is idempotent on duplicate add/remove, and activePlans filters", () => {
+    const rm = makePlanRemoved(p1.eventId, "owner", 3_000);
+    const dupRm = makePlanRemoved(p1.eventId, "owner", 3_500); // idempotent
+    const plans = foldPlans([p1, p1, p2, rm, dupRm]); // duplicate PlanAdded collapses
+    expect(plans).toHaveLength(2);
+    const v1 = plans.find((p) => p.planId === p1.eventId)!;
+    expect(v1.removed).toBe(true);
+
+    const active = activePlans(plans);
+    expect(active).toHaveLength(1);
+    expect(active[0].planId).toBe(p2.eventId);
+  });
+});
+
+describe("sold-out marks", () => {
+  const m1 = makeSoldOutMarked({
+    menuId: "m-burger",
+    menuName: "서울더블버거",
+    sessionId: "s1",
+    markedBy: "owner",
+    now: 3_000,
+  });
+  const m2 = makeSoldOutMarked({
+    menuId: "m-fries",
+    menuName: "감자튀김",
+    sessionId: null, // marked outside an active session
+    markedBy: "owner",
+    now: 1_000,
+  });
+
+  it("extracts sold-out marks sorted by ts, snapshotting the name and session", () => {
+    const other = makeExpenseAdded({
+      sessionId: "s1",
+      category: "fuel",
+      amount: 1000,
+      enteredBy: "owner",
+      now: 2_000,
+    });
+    const marks = foldSoldOutMarks([m1, other, m2]);
+    expect(marks).toHaveLength(2);
+    // sorted by ts: m2 (1_000) before m1 (3_000)
+    expect(marks[0].menuId).toBe("m-fries");
+    expect(marks[0].sessionId).toBeNull();
+    expect(marks[1].menuId).toBe("m-burger");
+    expect(marks[1].menuName).toBe("서울더블버거");
+    expect(marks[1].sessionId).toBe("s1");
   });
 });
 
@@ -278,7 +391,7 @@ describe("dateKey + filter", () => {
     const ts = Date.UTC(2026, 5, 28, 3, 0, 0); // 2026-06-28 03:00 UTC
     const key = dateKey(ts, 540); // KST +9h -> 12:00 local -> 2026-06-28
     expect(key).toBe("2026-06-28");
-    const open = makeSessionOpened("owner", ts);
+    const open = makeSessionOpened("owner", { now: ts });
     const ord = makeOrderPlaced({ sessionId: open.sessionId, enteredBy: "owner", lines: [lineFromMenu(burger, 1)], now: ts });
     const views = foldOrders([open, ord]);
     expect(filterByDateKey(views, "2026-06-28", 540)).toHaveLength(1);
@@ -337,7 +450,7 @@ describe("period keys", () => {
     const ts = Date.UTC(2026, 5, 28, 3, 0, 0); // 2026-06-28 12:00 KST
     expect(monthKey(ts, 540)).toBe("2026-06");
     expect(yearKey(ts, 540)).toBe("2026");
-    const open = makeSessionOpened("owner", ts);
+    const open = makeSessionOpened("owner", { now: ts });
     const ord = makeOrderPlaced({ sessionId: open.sessionId, enteredBy: "owner", lines: [lineFromMenu(burger, 1)], now: ts });
     const views = foldOrders([open, ord]);
     expect(filterByPeriodPrefix(views, "2026-06", 540)).toHaveLength(1);
