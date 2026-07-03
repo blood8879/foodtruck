@@ -1,17 +1,78 @@
 import { router } from "expo-router";
+import { useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../../data/AppData";
 import { useAuth } from "../../auth/AuthContext";
 import { AppButton, Badge, Card, Icon, ScreenTitle } from "../../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing } from "../../theme/tokens";
-import { PAID_FEATURES, PAID_FEATURE_LABEL } from "../../core";
+import {
+  canUseFeature,
+  dateKey,
+  expensesToCsv,
+  foldExpenses,
+  foldOrders,
+  foldSessions,
+  ordersToCsv,
+  PAID_FEATURES,
+  PAID_FEATURE_LABEL,
+} from "../../core";
+import { exportCsvFiles, type CsvFile } from "../../export/exportCsv";
+
+const TZ_KST = 540;
+const FREE_EXPORT_WINDOW_MS = 31 * 24 * 60 * 60 * 1000; // 최근 1개월
 
 export default function SettingsScreen() {
-  const { truck, staff, setPlanTier, regenerateInviteCode } = useAppData();
+  const { truck, staff, events, setPlanTier, regenerateInviteCode, trialUntil } = useAppData();
   const { inviteCode, configured, userId, email, signOut } = useAuth();
+  const [exporting, setExporting] = useState(false);
   const shownInvite = inviteCode ?? truck?.inviteCode ?? "-----";
-  const paid = truck?.planTier === "paid";
+  const planTier = truck?.planTier ?? "free";
+  const paid = planTier === "paid";
+  const now = Date.now();
+  const trialActive = trialUntil != null && now < trialUntil;
+  const trialHoursLeft = trialActive
+    ? Math.max(1, Math.ceil((trialUntil - now) / (60 * 60 * 1000)))
+    : 0;
+  const canFullExport = canUseFeature(planTier, "dataExport", trialUntil, now);
+
+  async function handleExport() {
+    if (exporting) return; // guard against duplicate taps while an export is running
+    setExporting(true);
+    try {
+      const exportNow = Date.now();
+      const full = canUseFeature(planTier, "dataExport", trialUntil, exportNow);
+      const cutoff = exportNow - FREE_EXPORT_WINDOW_MS;
+      const orders = foldOrders(events).filter((o) => full || o.ts >= cutoff);
+      const expenses = foldExpenses(events).filter((e) => full || e.ts >= cutoff);
+
+      const locationBySession = new Map<string, string>();
+      for (const s of foldSessions(events)) {
+        if (s.locationTag) locationBySession.set(s.sessionId, s.locationTag);
+      }
+
+      const stamp = dateKey(exportNow, TZ_KST).replace(/-/g, ""); // YYYYMMDD
+      const files: CsvFile[] = [
+        {
+          filename: `todaysales_orders_${stamp}.csv`,
+          content: ordersToCsv(orders, { tzOffsetMinutes: TZ_KST, locationBySession }),
+        },
+      ];
+      // 지출이 없으면 지출 파일은 건너뜀.
+      if (expenses.length > 0) {
+        files.push({
+          filename: `todaysales_expenses_${stamp}.csv`,
+          content: expensesToCsv(expenses, { tzOffsetMinutes: TZ_KST }),
+        });
+      }
+
+      await exportCsvFiles(files);
+    } catch {
+      Alert.alert("내보내기 실패", "파일을 내보내지 못했어요. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function confirmRegenerate() {
     Alert.alert(
@@ -76,8 +137,15 @@ export default function SettingsScreen() {
         <Card dark style={styles.planCard}>
           <View style={styles.planHead}>
             <Text style={styles.planLabel}>현재 · {paid ? "유료 플랜" : "무료 플랜"}</Text>
-            {paid ? <Badge tone="gold">PRO</Badge> : null}
+            {paid ? (
+              <Badge tone="gold">PRO</Badge>
+            ) : trialActive ? (
+              <Badge tone="gold">체험중</Badge>
+            ) : null}
           </View>
+          {!paid && trialActive ? (
+            <Text style={styles.trialText}>무료 체험중 · {trialHoursLeft}시간 남음</Text>
+          ) : null}
           {PAID_FEATURES.map((f) => (
             <View key={f} style={styles.planFeature}>
               <Icon name={paid ? "check-circle" : "lock"} size={16} color={paid ? colors.green : colors.gold} />
@@ -95,6 +163,34 @@ export default function SettingsScreen() {
             M1: 요금제 seam만 동작(전체 무료 개방). 실제 구독 결제·광고 SDK는 M4.
           </Text>
         </Card>
+
+        {/* data export */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>데이터 내보내기</Text>
+          <Card style={styles.exportCard}>
+            <View style={styles.exportRow}>
+              <View style={styles.exportIcon}>
+                <Icon name="file-download" size={22} color={colors.accent} />
+              </View>
+              <View style={styles.flex1}>
+                <Text style={styles.exportTitle}>주문·지출 CSV 내보내기</Text>
+                <Text style={styles.exportSub}>
+                  {canFullExport ? "전체 기간" : "최근 1개월"} · 엑셀에서 바로 열려요
+                </Text>
+              </View>
+            </View>
+            {!canFullExport ? (
+              <Text style={styles.exportNote}>무료 플랜은 최근 1개월만 내보내요</Text>
+            ) : null}
+            <AppButton
+              title={exporting ? "내보내는 중…" : "CSV 내보내기"}
+              variant="accent"
+              icon="file-download"
+              disabled={exporting}
+              onPress={handleExport}
+            />
+          </Card>
+        </View>
 
         {/* end business */}
         <AppButton title="영업 종료" variant="dark" icon="stop-circle" onPress={() => router.push("/close-summary")} />
@@ -146,4 +242,11 @@ const styles = StyleSheet.create({
   planFeature: { flexDirection: "row", alignItems: "center", gap: 10 },
   planFeatureText: { fontSize: fontSize.bodySm, color: colors.muted2 },
   planNote: { fontSize: fontSize.micro, color: colors.muted, marginTop: spacing.xs, lineHeight: 16 },
+  trialText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.gold },
+  exportCard: { gap: spacing.md },
+  exportRow: { flexDirection: "row", alignItems: "center", gap: spacing.md },
+  exportIcon: { width: 44, height: 44, borderRadius: 14, backgroundColor: colors.accentSoft, alignItems: "center", justifyContent: "center" },
+  exportTitle: { fontSize: fontSize.body, fontWeight: fontWeight.heavy, color: colors.ink },
+  exportSub: { fontSize: fontSize.bodySm, color: colors.ink2, marginTop: 2 },
+  exportNote: { fontSize: fontSize.micro, color: colors.muted },
 });

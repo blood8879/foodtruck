@@ -6,8 +6,8 @@
  */
 
 import { dateKey } from "./fold";
-import { PAYMENT_METHOD_LABELS } from "./types";
-import type { OrderView } from "./types";
+import { EXPENSE_CATEGORY_LABELS, PAYMENT_METHOD_LABELS } from "./types";
+import type { ExpenseView, OrderView } from "./types";
 
 /** UTF-8 BOM — makes Excel on Korean Windows read the file as UTF-8. */
 const BOM = "﻿";
@@ -121,6 +121,37 @@ export function ordersToCsv(orders: OrderView[], opts?: OrdersToCsvOptions): str
       ]);
     });
   }
+
+  return toCsv(header, rows);
+}
+
+export interface ExpensesToCsvOptions {
+  /** Timezone offset (minutes east of UTC). Defaults to KST (540). */
+  tzOffsetMinutes?: number;
+}
+
+/**
+ * Export expenses as a CSV (one row per expense).
+ *
+ * Columns (Korean): 날짜, 시간, 카테고리, 금액, 메모, 취소여부.
+ *
+ * - 날짜/시간 use the tz offset (KST by default), 시간 computed directly.
+ * - 카테고리 uses the Korean label.
+ * - 취소여부 is Y/N; voided expenses are still included as rows.
+ */
+export function expensesToCsv(expenses: ExpenseView[], opts?: ExpensesToCsvOptions): string {
+  const tz = opts?.tzOffsetMinutes ?? KST_OFFSET_MINUTES;
+
+  const header = ["날짜", "시간", "카테고리", "금액", "메모", "취소여부"];
+
+  const rows: (string | number)[][] = expenses.map((e) => [
+    dateKey(e.ts, tz),
+    timeHHMM(e.ts, tz),
+    EXPENSE_CATEGORY_LABELS[e.category],
+    e.amount,
+    e.memo ?? "",
+    e.voided ? "Y" : "N",
+  ]);
 
   return toCsv(header, rows);
 }

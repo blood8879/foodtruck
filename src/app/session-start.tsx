@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
 import { useAuth } from "../auth/AuthContext";
 import { capAllowsAd } from "../ads/adGate";
+import { scheduleCloseReminder } from "../notifications/closeReminder";
 import { AppButton, Card, Chip, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing } from "../theme/tokens";
 import {
@@ -53,6 +54,8 @@ export default function SessionStartScreen() {
 
   async function startBusiness() {
     openSession(ownerId, locationTag.trim() || undefined);
+    // Fire-and-forget: don't delay the screen transition on notification setup.
+    void scheduleCloseReminder();
     const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());
     if (showAd) {
       router.replace({ pathname: "/ad", params: { phase: "open" } });

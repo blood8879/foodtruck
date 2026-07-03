@@ -26,6 +26,36 @@ export function canUse(tier: PlanTier, feature: PaidFeature): boolean {
   return false;
 }
 
+/**
+ * Features unlocked by the rewarded-ad trial (24h). Ad removal (adFree) and PC
+ * web (pcWeb) are intentionally excluded — those stay subscription-only, since
+ * granting ad-free via an ad would be self-defeating.
+ */
+export const TRIAL_FEATURES: readonly PaidFeature[] = [
+  "periodAnalysis",
+  "trendGraph",
+  "dataExport",
+];
+
+/**
+ * Whether `tier` may use a feature, honoring an active trial. Paid always wins.
+ * Otherwise the trial grants a TRIAL_FEATURES subset while it is active
+ * (`now < trialUntil`); an expired or absent trial (`trialUntil` null) grants
+ * nothing beyond what the tier already allows.
+ */
+export function canUseFeature(
+  tier: PlanTier,
+  feature: PaidFeature,
+  trialUntil: number | null,
+  now: number,
+): boolean {
+  if (canUse(tier, feature)) return true;
+  if (trialUntil != null && now < trialUntil && TRIAL_FEATURES.includes(feature)) {
+    return true;
+  }
+  return false;
+}
+
 /** Free tier shows an interstitial ad at session open/close. */
 export function shouldShowSessionAd(tier: PlanTier): boolean {
   return tier === "free";

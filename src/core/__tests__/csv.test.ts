@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { ordersToCsv, toCsv } from "../index";
-import type { OrderView } from "../types";
+import { expensesToCsv, ordersToCsv, toCsv } from "../index";
+import type { ExpenseView, OrderView } from "../types";
 
 const BOM = "﻿";
 
@@ -156,6 +156,67 @@ describe("ordersToCsv", () => {
     // UTC render (offset 0): 2026-07-03T00:05Z → 00:05 UTC
     const o = order({ orderId: "o1", ts: KST_TS });
     const row = bodyRows(ordersToCsv([o], { tzOffsetMinutes: 0 }))[0];
+    expect(row.startsWith("2026-07-03,00:05,")).toBe(true);
+  });
+});
+
+describe("expensesToCsv", () => {
+  // 2026-07-03 09:05 KST == 2026-07-03T00:05:00Z
+  const KST_TS = Date.UTC(2026, 6, 3, 0, 5, 0);
+
+  function expense(
+    partial: Partial<ExpenseView> & Pick<ExpenseView, "expenseId" | "ts" | "category" | "amount">,
+  ): ExpenseView {
+    return {
+      sessionId: "s1",
+      memo: undefined,
+      enteredBy: "staff1",
+      voided: false,
+      ...partial,
+    };
+  }
+
+  function bodyRows(csv: string): string[] {
+    return csv.slice(BOM.length).split("\r\n").slice(1);
+  }
+
+  it("includes the BOM and Korean header", () => {
+    const csv = expensesToCsv([]);
+    expect(csv.startsWith(BOM)).toBe(true);
+    const header = csv.slice(BOM.length).split("\r\n")[0];
+    expect(header).toBe("날짜,시간,카테고리,금액,메모,취소여부");
+  });
+
+  it("emits one row per expense with the Korean category label and KST time", () => {
+    const e = expense({ expenseId: "e1", ts: KST_TS, category: "spot", amount: 30000, memo: "야시장 자리" });
+    const rows = bodyRows(expensesToCsv([e]));
+    expect(rows).toHaveLength(1);
+    // 날짜,시간,카테고리,금액,메모,취소여부
+    expect(rows[0]).toBe("2026-07-03,09:05,자릿세,30000,야시장 자리,N");
+  });
+
+  it("marks voided expenses with Y but still includes their rows", () => {
+    const e = expense({ expenseId: "e1", ts: KST_TS, category: "fuel", amount: 5000, voided: true });
+    const rows = bodyRows(expensesToCsv([e]));
+    expect(rows[0]).toBe("2026-07-03,09:05,유류비,5000,,Y");
+  });
+
+  it("leaves the memo blank when absent", () => {
+    const e = expense({ expenseId: "e1", ts: KST_TS, category: "supplies", amount: 1200 });
+    const row = bodyRows(expensesToCsv([e]))[0];
+    expect(row.split(",")[4]).toBe("");
+  });
+
+  it("escapes memos containing commas, quotes, and newlines", () => {
+    const e = expense({ expenseId: "e1", ts: KST_TS, category: "other", amount: 1000, memo: 'A,B "C"\nD' });
+    const row = bodyRows(expensesToCsv([e]))[0];
+    expect(row).toContain('"A,B ""C""\nD"');
+  });
+
+  it("honors a custom tz offset", () => {
+    // UTC render (offset 0): 2026-07-03T00:05Z → 00:05 UTC
+    const e = expense({ expenseId: "e1", ts: KST_TS, category: "event_fee", amount: 10000 });
+    const row = bodyRows(expensesToCsv([e], { tzOffsetMinutes: 0 }))[0];
     expect(row.startsWith("2026-07-03,00:05,")).toBe(true);
   });
 });

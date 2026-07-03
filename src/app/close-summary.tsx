@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppData } from "../data/AppData";
 import { capAllowsAd } from "../ads/adGate";
+import { cancelCloseReminder } from "../notifications/closeReminder";
 import { AppButton, Card, Icon, MoneyText } from "../ui/components";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../theme/tokens";
 import { formatWon, shouldShowSessionAd, sumExpenses, summarizeByPayment } from "../core";
@@ -18,6 +19,8 @@ export default function CloseSummaryScreen() {
 
   async function endBusiness() {
     closeSession(ownerId);
+    // Session is done — drop the pending +8h reminder.
+    void cancelCloseReminder();
     const showAd = !!truck && shouldShowSessionAd(truck.planTier) && (await capAllowsAd());
     if (showAd) {
       router.replace({ pathname: "/ad", params: { phase: "close" } });

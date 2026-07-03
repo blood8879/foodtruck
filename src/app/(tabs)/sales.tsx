@@ -7,7 +7,7 @@ import { Badge, Card, Icon, LockChip, MoneyText } from "../../ui/components";
 import { TrendChart } from "../../components/trend-chart";
 import { colors, fontSize, fontWeight, radii, spacing, tabularNums } from "../../theme/tokens";
 import {
-  canUse,
+  canUseFeature,
   dateKey,
   filterByPeriodPrefix,
   filterExpensesByPeriodPrefix,
@@ -20,14 +20,38 @@ import {
   yearKey,
 } from "../../core";
 import { EXPENSE_CATEGORY_LABELS } from "../../core/types";
+import { showRewardedAd } from "../../ads/adPort";
 
 type Period = "day" | "month" | "year";
 
 export default function SalesScreen() {
-  const { truck, events, staff, ownerId, voidExpense } = useAppData();
+  const { truck, events, staff, ownerId, voidExpense, trialUntil, startTrial } = useAppData();
   const [period, setPeriod] = useState<Period>("day");
-  const paid = truck?.planTier === "paid";
-  const canPeriod = canUse(truck?.planTier ?? "free", "periodAnalysis");
+  const [watchingAd, setWatchingAd] = useState(false);
+  const planTier = truck?.planTier ?? "free";
+  const paid = planTier === "paid";
+  const now = Date.now();
+  const canPeriod = canUseFeature(planTier, "periodAnalysis", trialUntil, now);
+  const canTrend = canUseFeature(planTier, "trendGraph", trialUntil, now);
+  const trialActive = trialUntil != null && now < trialUntil;
+  const trialHoursLeft = trialActive
+    ? Math.max(1, Math.ceil((trialUntil - now) / (60 * 60 * 1000)))
+    : 0;
+
+  async function watchAdForTrial() {
+    if (watchingAd) return; // guard against duplicate taps while a request is in flight
+    setWatchingAd(true);
+    try {
+      const result = await showRewardedAd({ onEarnedReward: () => startTrial(24) });
+      if (result === "failed") {
+        Alert.alert("체험권", "광고를 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
+      } else if (result === "dismissed") {
+        Alert.alert("체험권", "광고를 끝까지 시청하면 체험권이 지급돼요.");
+      }
+    } finally {
+      setWatchingAd(false);
+    }
+  }
 
   const TZ_KST = 540;
   const { summary, orders, allOrders, expenses, expenseTotal, label } = useMemo(() => {
@@ -65,7 +89,12 @@ export default function SalesScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.body}>
-        <Text style={styles.title}>매출</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>매출</Text>
+          {trialActive ? (
+            <Badge tone="gold">체험중 · {trialHoursLeft}시간 남음</Badge>
+          ) : null}
+        </View>
 
         {/* 1. big numbers + period toggle */}
         <View style={styles.kpiRow}>
@@ -96,13 +125,17 @@ export default function SalesScreen() {
           <PeriodTab label="연" active={period === "year"} locked={!canPeriod} onPress={() => canPeriod && setPeriod("year")} />
         </View>
 
+        {!canPeriod ? (
+          <TrialButton watching={watchingAd} onPress={watchAdForTrial} />
+        ) : null}
+
         {/* 2. trend graph — paid lock */}
         <Card style={styles.section}>
           <View style={styles.sectionHead}>
             <Text style={styles.sectionTitle}>기간별 추이</Text>
             {!paid ? <LockChip label="유료" /> : null}
           </View>
-          {canUse(truck?.planTier ?? "free", "trendGraph") ? (
+          {canTrend ? (
             <TrendChart orders={allOrders} tzOffsetMinutes={TZ_KST} />
           ) : (
             <View style={styles.lockArea}>
@@ -110,6 +143,7 @@ export default function SalesScreen() {
                 <Icon name="lock" size={20} color={colors.gold} />
               </View>
               <Text style={styles.lockText}>유료 플랜에서 추이 그래프 잠금 해제</Text>
+              <TrialButton watching={watchingAd} onPress={watchAdForTrial} />
             </View>
           )}
         </Card>
@@ -222,6 +256,22 @@ export default function SalesScreen() {
   );
 }
 
+function TrialButton({ watching, onPress }: { watching: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={watching}
+      accessibilityRole="button"
+      style={[styles.trialBtn, watching && styles.trialBtnDisabled]}
+    >
+      <Icon name="play-circle" size={16} color={colors.gold} />
+      <Text style={styles.trialBtnText}>
+        {watching ? "광고 불러오는 중…" : "광고 보고 24시간 체험"}
+      </Text>
+    </Pressable>
+  );
+}
+
 function PeriodTab({
   label,
   active,
@@ -244,7 +294,20 @@ function PeriodTab({
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   body: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxxl },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: spacing.sm },
   title: { fontSize: fontSize.screenTitle, fontWeight: fontWeight.heavy, color: colors.ink, letterSpacing: -0.5 },
+  trialBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.input,
+    backgroundColor: colors.goldSoft,
+  },
+  trialBtnDisabled: { opacity: 0.6 },
+  trialBtnText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.gold },
   kpiRow: { flexDirection: "row", gap: spacing.md },
   kpiCard: { flex: 1, gap: 8 },
   kpiLabel: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.muted },

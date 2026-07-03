@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createStore } from "../db/createStore";
 import type { Store } from "../db/contract";
+import { capStorage } from "../ads/capStorage";
 import { useAuth } from "../auth/AuthContext";
 import { SyncEngine } from "../sync/engine";
 import { StoreSyncLocal } from "../sync/storeLocal";
@@ -89,6 +90,10 @@ interface AppDataValue {
   addExpense: (args: AddExpenseArgs) => void;
   voidExpense: (expenseId: string, by: string) => void;
   setPlanTier: (tier: PlanTier) => void;
+  /** Epoch ms until which the rewarded-ad trial is active, or null if none. */
+  trialUntil: number | null;
+  /** Grant a rewarded-ad trial for `hours` (default 24) from now, persisted. */
+  startTrial: (hours?: number) => void;
   /** Rotate the invite code (invalidates the previous one). Local-first. */
   regenerateInviteCode: () => void;
   /** Edit business name + owner display name. Local-first. */
@@ -99,6 +104,7 @@ interface AppDataValue {
 const AppDataContext = createContext<AppDataValue | null>(null);
 
 const TZ_KST = 540; // minutes east of UTC (Asia/Seoul)
+const TRIAL_UNTIL_KEY = "trial.until"; // capStorage key: epoch ms of trial expiry
 
 export function AppDataProvider({ children }: { children: ReactNode }) {
   const [repo] = useState<Store>(() => createStore());
@@ -109,6 +115,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [events, setEvents] = useState<DomainEvent[]>([]);
   const [pendingSync, setPendingSync] = useState(0);
   const [syncEnabled, setSyncEnabled] = useState(false);
+  const [trialUntil, setTrialUntil] = useState<number | null>(null);
   const auth = useAuth();
   const engineRef = useRef<SyncEngine | null>(null);
   const truckIdRef = useRef<string | null>(null);
@@ -133,7 +140,26 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setTruck(t);
     refresh();
     setLoading(false);
+    // Restore any previously granted trial (persisted via capStorage). Expiry is
+    // evaluated at each use site against Date.now(), so we simply load the value.
+    capStorage
+      .get(TRIAL_UNTIL_KEY)
+      .then((v) => {
+        const ts = v ? Number(v) : NaN;
+        if (Number.isFinite(ts)) setTrialUntil(ts);
+      })
+      .catch(() => {
+        /* storage unavailable — no trial restored */
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const startTrial = useCallback((hours = 24) => {
+    const until = Date.now() + hours * 60 * 60 * 1000;
+    setTrialUntil(until);
+    capStorage.set(TRIAL_UNTIL_KEY, String(until)).catch(() => {
+      /* storage unavailable — trial still active in-memory for this session */
+    });
   }, []);
 
   const append = useCallback(
@@ -269,6 +295,8 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       repo.setPlanTier(tier);
       refresh();
     },
+    trialUntil,
+    startTrial,
     regenerateInviteCode: () => {
       // Local-first: rotate immediately so guests/offline users get a new code.
       const code = inviteCode();
