@@ -166,15 +166,26 @@ export default function SettingsScreen() {
               <Text style={styles.planFeatureText}>{PAID_FEATURE_LABEL[f]}</Text>
             </View>
           ))}
-          <AppButton
-            title={paid ? "무료로 전환 (데모)" : "유료 업그레이드"}
-            variant={paid ? "ghost" : "gold"}
-            icon={paid ? undefined : "workspace-premium"}
-            onPress={() => setPlanTier(paid ? "free" : "paid")}
-            style={{ marginTop: spacing.sm }}
-          />
+          {!paid ? (
+            <AppButton
+              title="프로 업그레이드"
+              variant="gold"
+              icon="workspace-premium"
+              onPress={() => router.push("/paywall")}
+              style={{ marginTop: spacing.sm }}
+            />
+          ) : null}
+          {/* 데모용 무료/유료 토글 — 개발 빌드에서만 노출(실제 구독은 위 업그레이드 버튼). */}
+          {__DEV__ ? (
+            <AppButton
+              title={paid ? "무료로 전환 (데모)" : "유료로 전환 (데모)"}
+              variant="ghost"
+              onPress={() => setPlanTier(paid ? "free" : "paid")}
+              style={{ marginTop: spacing.sm }}
+            />
+          ) : null}
           <Text style={styles.planNote}>
-            M1: 요금제 seam만 동작(전체 무료 개방). 실제 구독 결제·광고 SDK는 M4.
+            구독은 Google Play 계정으로 청구·관리되며, 언제든 해지할 수 있어요.
           </Text>
         </Card>
 

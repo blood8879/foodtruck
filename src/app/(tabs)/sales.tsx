@@ -23,6 +23,7 @@ import {
 } from "../../core";
 import { EXPENSE_CATEGORY_LABELS } from "../../core/types";
 import { showRewardedAd } from "../../ads/adPort";
+import { logEvent } from "../../analytics/analytics";
 
 type Period = "day" | "month" | "year";
 
@@ -46,11 +47,17 @@ export default function SalesScreen() {
   async function watchAdForTrial() {
     if (watchingAd) return; // guard against duplicate taps while a request is in flight
     setWatchingAd(true);
+    logEvent("trial_ad_requested");
     try {
       const result = await showRewardedAd({ onEarnedReward: () => startTrial(24) });
-      if (result === "failed") {
+      if (result === "earned") {
+        logEvent("trial_ad_earned");
+        logEvent("trial_started");
+      } else if (result === "failed") {
+        logEvent("trial_ad_failed");
         Alert.alert("체험권", "광고를 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
       } else if (result === "dismissed") {
+        logEvent("trial_ad_dismissed");
         Alert.alert("체험권", "광고를 끝까지 시청하면 체험권이 지급돼요.");
       }
     } finally {
@@ -132,6 +139,17 @@ export default function SalesScreen() {
 
         {!canPeriod ? (
           <TrialButton watching={watchingAd} onPress={watchAdForTrial} />
+        ) : null}
+
+        {!paid ? (
+          <Pressable
+            onPress={() => router.push("/paywall")}
+            accessibilityRole="button"
+            style={styles.subscribeLink}
+          >
+            <Icon name="workspace-premium" size={16} color={colors.gold} />
+            <Text style={styles.subscribeLinkText}>광고 없이 모든 기능 — 구독하기</Text>
+          </Pressable>
         ) : null}
 
         {/* 2. trend graph — paid lock */}
@@ -355,6 +373,14 @@ const styles = StyleSheet.create({
   },
   trialBtnDisabled: { opacity: 0.6 },
   trialBtnText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.gold },
+  subscribeLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: spacing.sm,
+  },
+  subscribeLinkText: { fontSize: fontSize.bodySm, fontWeight: fontWeight.bold, color: colors.gold },
   kpiRow: { flexDirection: "row", gap: spacing.md },
   kpiCard: { flex: 1, gap: 8 },
   kpiLabel: { fontSize: fontSize.caption, fontWeight: fontWeight.bold, color: colors.muted },

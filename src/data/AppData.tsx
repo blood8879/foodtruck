@@ -19,6 +19,11 @@ import { syncMenus } from "../sync/menuSync";
 import { isSyncConfigured } from "../sync/config";
 import { getSupabase } from "../sync/supabaseClient";
 import {
+  initPurchases,
+  isPurchasesConfigured,
+  watchProEntitlement,
+} from "../purchases/purchasesPort";
+import {
   dateKey,
   filterByDateKey,
   foldExpenses,
@@ -171,6 +176,27 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       .catch(() => {
         /* storage unavailable — no trial restored */
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // RevenueCat: mirror the "pro" entitlement into the local plan tier. Only runs
+  // when purchases are configured (an Android API key is present); otherwise we
+  // never touch planTier, preserving the local/demo free/paid toggle.
+  useEffect(() => {
+    if (!isPurchasesConfigured()) return;
+    let cancelled = false;
+    let unsub = () => {};
+    initPurchases().then(() => {
+      if (cancelled) return;
+      unsub = watchProEntitlement((isPro) => {
+        repo.setPlanTier(isPro ? "paid" : "free");
+        refresh();
+      });
+    });
+    return () => {
+      cancelled = true;
+      unsub();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
