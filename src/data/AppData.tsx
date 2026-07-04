@@ -200,6 +200,20 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Server-granted plan tier (truck.plan_tier): when purchases are NOT wired
+  // (no RevenueCat key), a signed-in owner whose server truck row says "paid"
+  // gets pro locally — used for comped/test accounts. Elevation only: a server
+  // "free" never downgrades a local/demo paid state, and once RevenueCat is
+  // configured the entitlement watcher above is the source of truth instead.
+  useEffect(() => {
+    if (isPurchasesConfigured()) return;
+    if (auth.serverPlanTier === "paid" && truck?.planTier !== "paid") {
+      repo.setPlanTier("paid");
+      refresh();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [auth.serverPlanTier, truck?.planTier]);
+
   const startTrial = useCallback((hours = 24) => {
     const until = Date.now() + hours * 60 * 60 * 1000;
     setTrialUntil(until);

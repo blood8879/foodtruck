@@ -44,6 +44,8 @@ interface AuthValue {
   role: Role | null;
   /** Server truck invite code (owner shares this with staff). */
   inviteCode: string | null;
+  /** Server-side truck plan tier (from truck.plan_tier), null until loaded. */
+  serverPlanTier: "free" | "paid" | null;
   email: string | null;
   /** Signed in but not yet attached to any truck -> show onboarding. */
   needsOnboarding: boolean;
@@ -75,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [truckId, setTruckId] = useState<string | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
+  const [serverPlanTier, setServerPlanTier] = useState<"free" | "paid" | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -137,8 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (row) {
         setTruckId(row.truck_id);
         setRole(row.role);
-        const { data: t } = await sb.from("truck").select("invite_code").eq("id", row.truck_id).limit(1);
-        setInviteCode((t as { invite_code: string }[] | null)?.[0]?.invite_code ?? null);
+        const { data: t } = await sb
+          .from("truck")
+          .select("invite_code, plan_tier")
+          .eq("id", row.truck_id)
+          .limit(1);
+        const truckRow = (t as { invite_code: string; plan_tier: string }[] | null)?.[0];
+        setInviteCode(truckRow?.invite_code ?? null);
+        setServerPlanTier(truckRow?.plan_tier === "paid" ? "paid" : "free");
         setNeedsOnboarding(false);
       } else {
         setNeedsOnboarding(true);
@@ -268,6 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     truckId,
     role,
     inviteCode,
+    serverPlanTier,
     email,
     needsOnboarding,
     error,
